@@ -35,7 +35,7 @@
   }
 }
 
-/* Animated background */
+/* Animated background - Aurora Borealis */
 .animated-bg {
   position: fixed;
   inset: 0;
@@ -47,37 +47,73 @@
 .animated-bg::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(ellipse at 20% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 20%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
-  animation: bgFloat 20s ease-in-out infinite;
+  top: -30%;
+  left: -20%;
+  width: 140%;
+  height: 100%;
+  background: 
+    linear-gradient(135deg, rgba(34, 211, 238, 0.12) 0%, transparent 40%),
+    linear-gradient(225deg, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
+    linear-gradient(315deg, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+  filter: blur(40px);
+  animation: aurora1 12s ease-in-out infinite alternate;
 }
 
 .animated-bg::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(ellipse at 70% 60%, rgba(168, 85, 247, 0.04) 0%, transparent 40%),
-              radial-gradient(ellipse at 30% 30%, rgba(79, 70, 229, 0.05) 0%, transparent 40%);
-  animation: bgFloat2 15s ease-in-out infinite;
+  bottom: -20%;
+  right: -20%;
+  width: 120%;
+  height: 80%;
+  background:
+    linear-gradient(45deg, rgba(59, 130, 246, 0.08) 0%, transparent 35%),
+    linear-gradient(160deg, rgba(168, 85, 247, 0.1) 0%, transparent 45%),
+    linear-gradient(280deg, rgba(20, 184, 166, 0.07) 0%, transparent 35%);
+  filter: blur(50px);
+  animation: aurora2 15s ease-in-out infinite alternate;
 }
 
-@keyframes bgFloat {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  33% { transform: translate(2%, -1%) rotate(1deg); }
-  66% { transform: translate(-1%, 2%) rotate(-1deg); }
+@keyframes aurora1 {
+  0% { 
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    opacity: 0.7;
+  }
+  25% {
+    transform: translateY(-5%) translateX(3%) rotate(2deg) scale(1.05);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(3%) translateX(-2%) rotate(-1deg) scale(0.95);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(-2%) translateX(-4%) rotate(1.5deg) scale(1.02);
+    opacity: 0.9;
+  }
+  100% { 
+    transform: translateY(4%) translateX(2%) rotate(-2deg) scale(1);
+    opacity: 0.7;
+  }
 }
 
-@keyframes bgFloat2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-2%, 1%) scale(1.02); }
+@keyframes aurora2 {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    opacity: 0.6;
+  }
+  33% {
+    transform: translateY(4%) translateX(-3%) rotate(-2deg) scale(1.08);
+    opacity: 0.9;
+  }
+  66% {
+    transform: translateY(-3%) translateX(5%) rotate(2.5deg) scale(0.95);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(2%) translateX(-2%) rotate(-1deg) scale(1.03);
+    opacity: 0.8;
+  }
 }
 
 /* Custom scrollbar */
