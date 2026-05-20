@@ -1,0 +1,31 @@
+# Dependency directories
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.venv
+venv/
+
+# Build output
+frontend/dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Downloads (runtime data)
+downloads/
+
+# Docker
+.dockerignore
+
+# Logs
+*.log

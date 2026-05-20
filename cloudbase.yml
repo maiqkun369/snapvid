@@ -1,0 +1,10 @@
+spec: v2
+
+build:
+  dockerfile: Dockerfile
+
+deploy:
+  service:
+    port: 8080
+    healthCheck:
+      path: /api/downloads
