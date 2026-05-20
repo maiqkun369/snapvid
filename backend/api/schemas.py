@@ -12,6 +12,7 @@ class VideoInfoRequest(BaseModel):
     """Request model for video info extraction."""
 
     url: str = Field(..., description="Video URL to extract info from")
+    platform_cookie: Optional[str] = Field(default=None, description="Platform name for cookie auth")
 
 
 class VideoFormat(BaseModel):
@@ -38,6 +39,8 @@ class VideoInfoResponse(BaseModel):
     platform: str = Field(default="", description="Platform name")
     formats: list[VideoFormat] = Field(default_factory=list, description="Available formats")
     subtitles: list[str] = Field(default_factory=list, description="Available subtitle languages")
+    chapters: Optional[list[dict]] = Field(default=None, description="Video chapters")
+    requires_auth: bool = Field(default=False, description="Whether platform requires auth")
 
 
 class DownloadRequest(BaseModel):
@@ -46,11 +49,19 @@ class DownloadRequest(BaseModel):
     url: str = Field(..., description="Video URL to download")
     format_id: str = Field(default="best", description="Format ID to download")
     audio_only: bool = Field(default=False, description="Download audio only as MP3")
+    audio_format: str = Field(default="mp3", description="Audio format: mp3, m4a, wav, flac")
+    audio_quality: str = Field(default="192", description="Audio quality: 128, 192, 256, 320")
     subtitles: Optional[str] = Field(default=None, description="Subtitle language code")
+    embed_subtitles: bool = Field(default=False, description="Embed subtitles into video")
     playlist: bool = Field(default=False, description="Download entire playlist")
-    rate_limit: Optional[float] = Field(
-        default=None, description="Rate limit in MB/s"
-    )
+    playlist_range: Optional[str] = Field(default=None, description="Playlist range e.g. 1:5")
+    rate_limit: Optional[float] = Field(default=None, description="Rate limit in MB/s")
+    embed_thumbnail: bool = Field(default=False, description="Embed thumbnail in file")
+    embed_metadata: bool = Field(default=True, description="Embed metadata in file")
+    split_chapters: bool = Field(default=False, description="Split video by chapters")
+    sponsor_block: bool = Field(default=False, description="Remove sponsor segments (YouTube)")
+    proxy: Optional[str] = Field(default=None, description="Proxy URL")
+    output_format: str = Field(default="mp4", description="Preferred output container: mp4, mkv, webm")
 
 
 class DownloadStatus(str, Enum):
@@ -89,3 +100,18 @@ class ErrorResponse(BaseModel):
     """Error response model."""
 
     detail: str = Field(default="", description="Error detail message")
+
+
+class CookieUploadRequest(BaseModel):
+    """Request model for cookie upload."""
+
+    platform: str = Field(..., description="Platform name: youtube, youku, tencent, etc.")
+    cookies_text: str = Field(..., description="Cookies in Netscape format")
+
+
+class CookieStatusResponse(BaseModel):
+    """Response for cookie status check."""
+
+    platform: str = Field(default="")
+    has_cookies: bool = Field(default=False)
+    expires_hint: str = Field(default="")

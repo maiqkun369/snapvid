@@ -8,6 +8,8 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 
 from api.schemas import (
+    CookieStatusResponse,
+    CookieUploadRequest,
     DownloadRequest,
     DownloadResponse,
     DownloadTask,
@@ -31,7 +33,7 @@ downloader_service = DownloaderService()
 async def get_video_info(request: VideoInfoRequest) -> VideoInfoResponse:
     """Extract video information from URL."""
     try:
-        info = await downloader_service.get_video_info(request.url)
+        info = await downloader_service.get_video_info(request.url, request.platform_cookie)
         return info
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -91,6 +93,30 @@ async def delete_download(task_id: str) -> dict[str, str]:
     if not success:
         raise HTTPException(status_code=404, detail="下载任务不存在")
     return {"message": "已删除"}
+
+
+# Cookie management endpoints
+@router.post("/cookies")
+async def upload_cookies(request: CookieUploadRequest) -> dict[str, str]:
+    """Upload cookies for a platform."""
+    try:
+        downloader_service.save_cookies(request.platform, request.cookies_text)
+        return {"message": f"{request.platform} cookies 已保存"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/cookies", response_model=list[CookieStatusResponse])
+async def get_cookies_status() -> list[CookieStatusResponse]:
+    """Get cookies status for all platforms."""
+    return downloader_service.get_cookies_status()
+
+
+@router.delete("/cookies/{platform}")
+async def delete_cookies(platform: str) -> dict[str, str]:
+    """Delete cookies for a platform."""
+    downloader_service.delete_cookies(platform)
+    return {"message": f"{platform} cookies 已删除"}
 
 
 @router.websocket("/ws/progress/{task_id}")
