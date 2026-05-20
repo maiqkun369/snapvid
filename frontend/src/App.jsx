@@ -77,14 +77,6 @@ function App() {
       {/* Header - minimal, floating */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium tracking-wide text-white/90">SnapVid</span>
-          </div>
           <div className="flex items-center gap-6">
             <span className="text-xs text-white/40 tracking-widest uppercase">1000+ platforms</span>
           </div>
@@ -151,11 +143,22 @@ function App() {
         </div>
       </main>
 
-      {/* Footer - minimal */}
+      {/* Footer - minimal + disclaimer */}
       <footer className="relative z-10 border-t border-white/[0.04] py-10">
-        <div className="max-w-3xl mx-auto px-6 flex items-center justify-between">
-          <span className="text-xs text-white/25 tracking-wide">Made by qikunma</span>
-          <span className="text-xs text-white/25 tracking-wide">Powered by yt-dlp</span>
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="flex items-center justify-between mb-8">
+            <span className="text-xs text-white/25 tracking-wide">Made by qikunma</span>
+            <span className="text-xs text-white/25 tracking-wide">Powered by yt-dlp</span>
+          </div>
+          {/* Disclaimer */}
+          <div className="border-t border-white/[0.04] pt-6">
+            <p className="text-[11px] text-white/20 leading-relaxed text-center">
+              免责声明：本工具仅供个人学习和研究使用。用户应确保其下载行为符合相关法律法规及平台服务条款。
+              本工具不存储任何视频内容，不对用户的下载行为承担任何法律责任。
+              请尊重内容创作者的版权，勿将下载内容用于商业用途或未经授权的传播。
+              使用本工具即表示您同意自行承担因使用而产生的一切风险和责任。
+            </p>
+          </div>
         </div>
       </footer>
     </div>
