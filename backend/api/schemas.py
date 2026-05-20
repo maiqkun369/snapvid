@@ -31,7 +31,7 @@ class VideoInfoResponse(BaseModel):
     """Response model for video info."""
 
     title: str = Field(default="", description="Video title")
-    duration: Optional[int] = Field(default=None, description="Duration in seconds")
+    duration: Optional[float] = Field(default=None, description="Duration in seconds")
     duration_string: str = Field(default="", description="Human-readable duration")
     thumbnail: str = Field(default="", description="Thumbnail URL")
     uploader: str = Field(default="", description="Uploader name")

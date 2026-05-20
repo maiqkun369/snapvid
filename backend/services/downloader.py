@@ -65,11 +65,25 @@ class DownloaderService:
         if not url or not url.strip():
             raise ValueError("URL不能为空")
 
+        url = url.strip()
+        # Auto-prepend https:// if missing
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+        # Ensure www. for bilibili
+        if "bilibili.com" in url and "www.bilibili.com" not in url:
+            url = url.replace("bilibili.com", "www.bilibili.com")
+
         ydl_opts: dict = {
             "quiet": True,
             "no_warnings": True,
             "extract_flat": False,
             "skip_download": True,
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                "Referer": url,
+            },
+            "extractor_args": {"BiliBili": {"lang": ["zh-Hans"]}},
+            "cookiefile": None,
         }
 
         loop = asyncio.get_event_loop()
@@ -168,6 +182,13 @@ class DownloaderService:
         if not request.url or not request.url.strip():
             raise ValueError("URL不能为空")
 
+        # Auto-fix URL
+        request.url = request.url.strip()
+        if not request.url.startswith(("http://", "https://")):
+            request.url = "https://" + request.url
+        if "bilibili.com" in request.url and "www.bilibili.com" not in request.url:
+            request.url = request.url.replace("bilibili.com", "www.bilibili.com")
+
         task_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
 
@@ -213,6 +234,10 @@ class DownloaderService:
             "quiet": True,
             "no_warnings": True,
             "progress_hooks": [lambda d: self._sync_progress_hook(task_id, d)],
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                "Referer": request.url,
+            },
         }
 
         # Format selection

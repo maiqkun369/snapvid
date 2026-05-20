@@ -7,7 +7,7 @@ import DownloadHistory from './components/DownloadHistory.jsx';
 import PlatformList from './components/PlatformList.jsx';
 
 /**
- * Main application component for ytdlp-web.
+ * Main application component for SnapVid.
  */
 function App() {
   const [videoInfo, setVideoInfo] = useState(null);
@@ -16,10 +16,6 @@ function App() {
   const [currentTask, setCurrentTask] = useState(null);
   const [refreshHistory, setRefreshHistory] = useState(0);
 
-  /**
-   * Handle URL submission for video info extraction.
-   * @param {string} url - The video URL to parse.
-   */
   const handleParse = useCallback(async (url) => {
     setLoading(true);
     setError('');
@@ -48,10 +44,6 @@ function App() {
     }
   }, []);
 
-  /**
-   * Handle download start.
-   * @param {object} options - Download options.
-   */
   const handleDownload = useCallback(async (options) => {
     setError('');
 
@@ -74,46 +66,42 @@ function App() {
     }
   }, []);
 
-  /**
-   * Handle download completion.
-   */
   const handleDownloadComplete = useCallback(() => {
     setRefreshHistory((prev) => prev + 1);
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="animated-bg" />
+
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-800/50 bg-gray-950/60 backdrop-blur-md sticky top-0 z-50 relative">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">ytdlp-web</h1>
-            <p className="text-xs text-gray-400">强大的在线视频下载器</p>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">SnapVid</h1>
+            <p className="text-xs text-gray-400">一键抓取，极速下载</p>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        {/* URL Input Section */}
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6 relative z-10">
         <UrlInput onParse={handleParse} loading={loading} />
 
-        {/* Error Display */}
         {error && (
           <div className="bg-red-900/30 border border-red-800 rounded-lg px-4 py-3 text-red-300 text-sm">
             <span className="font-medium">错误：</span>{error}
           </div>
         )}
 
-        {/* Video Info Card */}
         {videoInfo && <VideoInfo info={videoInfo} />}
 
-        {/* Download Options */}
         {videoInfo && (
           <DownloadOptions
             videoInfo={videoInfo}
@@ -121,7 +109,6 @@ function App() {
           />
         )}
 
-        {/* Progress Bar */}
         {currentTask && (
           <ProgressBar
             taskId={currentTask.id}
@@ -129,17 +116,15 @@ function App() {
           />
         )}
 
-        {/* Download History */}
         <DownloadHistory key={refreshHistory} />
 
-        {/* Platform List */}
         <PlatformList />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 mt-16">
+      <footer className="border-t border-gray-800/50 mt-16 relative z-10">
         <div className="max-w-4xl mx-auto px-4 py-6 text-center text-gray-500 text-sm">
-          <p>Powered by <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300">yt-dlp</a></p>
+          <p>Made by <span className="text-purple-400 font-medium">qikunma</span></p>
           <p className="mt-1">支持 1000+ 视频平台</p>
         </div>
       </footer>
