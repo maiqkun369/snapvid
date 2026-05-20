@@ -3,17 +3,21 @@ main:
     - docker:
         image: docker
         stages:
-          - name: build-and-deploy
+          - name: build-image
             script:
-              - docker build -t ytdlp-web:latest .
-              - docker tag ytdlp-web:latest ${CNB_REGISTRY}/ytdlp-web:latest
-              - docker push ${CNB_REGISTRY}/ytdlp-web:latest
+              - docker build -t ytdlp-web .
+              - docker tag ytdlp-web ${CNB_DOCKER_REGISTRY}/ytdlp-web:latest
+              - docker tag ytdlp-web ${CNB_DOCKER_REGISTRY}/ytdlp-web:${CNB_SHA::8}
+              - docker push ${CNB_DOCKER_REGISTRY}/ytdlp-web:latest
+              - docker push ${CNB_DOCKER_REGISTRY}/ytdlp-web:${CNB_SHA::8}
   api_trigger:
     - docker:
         image: docker
         stages:
-          - name: build-and-deploy
+          - name: build-image
             script:
-              - docker build -t ytdlp-web:latest .
-              - docker tag ytdlp-web:latest ${CNB_REGISTRY}/ytdlp-web:latest
-              - docker push ${CNB_REGISTRY}/ytdlp-web:latest
+              - docker build -t ytdlp-web .
+              - docker tag ytdlp-web ${CNB_DOCKER_REGISTRY}/ytdlp-web:latest
+              - docker tag ytdlp-web ${CNB_DOCKER_REGISTRY}/ytdlp-web:${CNB_SHA::8}
+              - docker push ${CNB_DOCKER_REGISTRY}/ytdlp-web:latest
+              - docker push ${CNB_DOCKER_REGISTRY}/ytdlp-web:${CNB_SHA::8}
