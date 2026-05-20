@@ -82,8 +82,12 @@ class DownloaderService:
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
                 "Referer": url,
             },
-            "extractor_args": {"BiliBili": {"lang": ["zh-Hans"]}},
+            "extractor_args": {
+                "BiliBili": {"lang": ["zh-Hans"]},
+                "youtube": {"player_client": ["web"]},
+            },
             "cookiefile": None,
+            "socket_timeout": 15,
         }
 
         loop = asyncio.get_event_loop()
@@ -163,7 +167,17 @@ class DownloaderService:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 return ydl.extract_info(url, download=False)
         except yt_dlp.utils.DownloadError as e:
-            raise ValueError(f"视频解析失败: {str(e)}")
+            err_msg = str(e)
+            if "Sign in to confirm" in err_msg or "bot" in err_msg:
+                raise ValueError(
+                    "YouTube 要求验证身份。当前服务器网络环境下 YouTube 下载受限，"
+                    "请尝试 Bilibili、抖音等国内平台，或配置代理后重试。"
+                )
+            elif "Video unavailable" in err_msg:
+                raise ValueError("视频不可用：可能是地区限制或视频已被删除")
+            elif "HTTP Error 403" in err_msg:
+                raise ValueError("访问被拒绝 (403)：平台反爬限制，请稍后重试")
+            raise ValueError(f"视频解析失败: {err_msg}")
         except Exception as e:
             raise ValueError(f"视频解析出错: {str(e)}")
 
