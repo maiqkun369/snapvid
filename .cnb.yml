@@ -1,0 +1,19 @@
+main:
+  push:
+    - docker:
+        image: docker
+        stages:
+          - name: build-and-deploy
+            script:
+              - docker build -t ytdlp-web:latest .
+              - docker tag ytdlp-web:latest ${CNB_REGISTRY}/ytdlp-web:latest
+              - docker push ${CNB_REGISTRY}/ytdlp-web:latest
+  api_trigger:
+    - docker:
+        image: docker
+        stages:
+          - name: build-and-deploy
+            script:
+              - docker build -t ytdlp-web:latest .
+              - docker tag ytdlp-web:latest ${CNB_REGISTRY}/ytdlp-web:latest
+              - docker push ${CNB_REGISTRY}/ytdlp-web:latest
