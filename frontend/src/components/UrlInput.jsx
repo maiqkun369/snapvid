@@ -1,74 +1,69 @@
 import React, { useState } from 'react';
 
-/**
- * URL input component with parse button.
- * @param {object} props
- * @param {function} props.onParse - Callback when user submits URL.
- * @param {boolean} props.loading - Whether parsing is in progress.
- */
 function UrlInput({ onParse, loading }) {
   const [url, setUrl] = useState('');
 
-  /**
-   * Handle form submission.
-   * @param {Event} e - Form submit event.
-   */
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmedUrl = url.trim();
-    if (trimmedUrl) {
-      onParse(trimmedUrl);
+    if (url.trim()) {
+      onParse(url.trim());
     }
   };
 
   return (
-    <div className="card">
-      <form onSubmit={handleSubmit} className="flex gap-3">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="粘贴视频链接... (支持 YouTube, Bilibili, Twitter 等 1000+ 平台)"
-            className="input-field pr-10"
-            disabled={loading}
-          />
-          {url && (
-            <button
-              type="button"
-              onClick={() => setUrl('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+    <form onSubmit={handleSubmit} className="relative">
+      <div className="relative group">
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Paste video URL here..."
+          className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl pl-5 pr-32 py-5
+            text-white text-base placeholder-white/25 focus:outline-none focus:border-white/20
+            focus:bg-white/[0.06] transition-all duration-400
+            group-hover:border-white/12 group-hover:bg-white/[0.05]"
+          disabled={loading}
+        />
+        {url && !loading && (
+          <button
+            type="button"
+            onClick={() => setUrl('')}
+            className="absolute right-28 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
         <button
           type="submit"
-          disabled={!url.trim() || loading}
-          className="btn-primary flex items-center gap-2 whitespace-nowrap"
+          disabled={loading || !url.trim()}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2
+            bg-white text-gray-900 font-medium text-sm
+            px-6 py-2.5 rounded-xl transition-all duration-300
+            hover:scale-[1.02] hover:shadow-lg hover:shadow-white/5
+            disabled:opacity-30 disabled:hover:scale-100
+            active:scale-95"
         >
           {loading ? (
-            <>
-              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              解析中...
-            </>
+              Parsing
+            </span>
           ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <span className="flex items-center gap-1.5">
+              Parse
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
-              解析
-            </>
+            </span>
           )}
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
 

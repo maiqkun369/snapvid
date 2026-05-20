@@ -6,9 +6,6 @@ import ProgressBar from './components/ProgressBar.jsx';
 import DownloadHistory from './components/DownloadHistory.jsx';
 import PlatformList from './components/PlatformList.jsx';
 
-/**
- * Main application component for SnapVid.
- */
 function App() {
   const [videoInfo, setVideoInfo] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -71,61 +68,94 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 relative overflow-hidden">
-      {/* Animated Background */}
+    <div className="min-h-screen relative overflow-hidden bg-[#050505] text-white">
+      {/* Aurora Background */}
       <div className="animated-bg" />
+      {/* Grain Overlay */}
+      <div className="grain-overlay" />
 
-      {/* Header */}
-      <header className="border-b border-gray-800/50 bg-gray-950/60 backdrop-blur-md sticky top-0 z-50 relative">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
+      {/* Header - minimal, floating */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+            <span className="text-sm font-medium tracking-wide text-white/90">SnapVid</span>
           </div>
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">SnapVid</h1>
-            <p className="text-xs text-gray-400">一键抓取，极速下载</p>
+          <div className="flex items-center gap-6">
+            <span className="text-xs text-white/40 tracking-widest uppercase">1000+ platforms</span>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6 relative z-10">
-        <UrlInput onParse={handleParse} loading={loading} />
-
-        {error && (
-          <div className="bg-red-900/30 border border-red-800 rounded-lg px-4 py-3 text-red-300 text-sm">
-            <span className="font-medium">错误：</span>{error}
+      {/* Hero Section */}
+      <main className="relative z-10 pt-32 pb-20">
+        <div className="max-w-3xl mx-auto px-6">
+          {/* Hero Text */}
+          <div className="text-center mb-16 fade-up">
+            <h1 className="text-4xl sm:text-5xl font-light tracking-tight leading-tight mb-4">
+              <span className="text-white/90">Grab any video,</span>
+              <br />
+              <span className="bg-gradient-to-r from-cyan-300 via-purple-300 to-emerald-300 bg-clip-text text-transparent font-normal">anywhere.</span>
+            </h1>
+            <p className="text-white/35 text-base mt-6 font-light tracking-wide">
+              Paste a link. Choose quality. Download.
+            </p>
           </div>
-        )}
 
-        {videoInfo && <VideoInfo info={videoInfo} />}
+          {/* URL Input */}
+          <div className="fade-up" style={{ animationDelay: '0.1s' }}>
+            <UrlInput onParse={handleParse} loading={loading} />
+          </div>
 
-        {videoInfo && (
-          <DownloadOptions
-            videoInfo={videoInfo}
-            onDownload={handleDownload}
-          />
-        )}
+          {/* Error */}
+          {error && (
+            <div className="mt-6 px-5 py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300/90 text-sm font-light">
+              {error}
+            </div>
+          )}
 
-        {currentTask && (
-          <ProgressBar
-            taskId={currentTask.id}
-            onComplete={handleDownloadComplete}
-          />
-        )}
+          {/* Video Info */}
+          {videoInfo && (
+            <div className="mt-8 fade-up">
+              <VideoInfo info={videoInfo} />
+            </div>
+          )}
 
-        <DownloadHistory key={refreshHistory} />
+          {/* Download Options */}
+          {videoInfo && (
+            <div className="mt-6 fade-up" style={{ animationDelay: '0.15s' }}>
+              <DownloadOptions videoInfo={videoInfo} onDownload={handleDownload} />
+            </div>
+          )}
 
-        <PlatformList />
+          {/* Progress */}
+          {currentTask && (
+            <div className="mt-6">
+              <ProgressBar taskId={currentTask.id} onComplete={handleDownloadComplete} />
+            </div>
+          )}
+
+          {/* Download History */}
+          <div className="mt-12">
+            <DownloadHistory key={refreshHistory} />
+          </div>
+
+          {/* Platforms */}
+          <div className="mt-16 fade-up" style={{ animationDelay: '0.2s' }}>
+            <PlatformList />
+          </div>
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800/50 mt-16 relative z-10">
-        <div className="max-w-4xl mx-auto px-4 py-6 text-center text-gray-500 text-sm">
-          <p>Made by <span className="text-purple-400 font-medium">qikunma</span></p>
-          <p className="mt-1">支持 1000+ 视频平台</p>
+      {/* Footer - minimal */}
+      <footer className="relative z-10 border-t border-white/[0.04] py-10">
+        <div className="max-w-3xl mx-auto px-6 flex items-center justify-between">
+          <span className="text-xs text-white/25 tracking-wide">Made by qikunma</span>
+          <span className="text-xs text-white/25 tracking-wide">Powered by yt-dlp</span>
         </div>
       </footer>
     </div>

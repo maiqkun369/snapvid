@@ -102,22 +102,22 @@ function PlatformList() {
   ];
 
   return (
-    <div className="card">
-      <h3 className="text-lg font-semibold text-white mb-4">支持的平台</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div>
+      <p className="text-xs text-white/30 tracking-widest uppercase mb-5">Supported Platforms</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {platforms.map((name) => (
           <div
             key={name}
-            className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-800/50 rounded-lg border border-gray-700/50 hover:border-purple-500/30 hover:bg-gray-800/80 transition-all duration-200"
+            className="platform-card flex items-center gap-2.5 px-3.5 py-3 rounded-xl
+              bg-white/[0.03] border border-white/[0.06]
+              hover:bg-white/[0.06] hover:border-white/[0.12]
+              transition-all duration-300 cursor-default"
           >
             <PlatformIcon name={name} />
-            <span className="text-sm text-gray-300">{name}</span>
+            <span className="text-sm text-white/60 font-light">{name}</span>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs text-gray-500 text-center">
-        基于 yt-dlp，支持超过 1000 个视频平台
-      </p>
     </div>
   );
 }
