@@ -5,13 +5,7 @@ import UrlInput from './components/UrlInput.jsx';
 import VideoInfo from './components/VideoInfo.jsx';
 import DownloadOptions from './components/DownloadOptions.jsx';
 import ProgressBar from './components/ProgressBar.jsx';
-import DownloadHistory from './components/DownloadHistory.jsx';
-import PlatformList from './components/PlatformList.jsx';
-import CookieManager from './components/CookieManager.jsx';
-import PricingPanel from './components/PricingPanel.jsx';
-import Features from './components/Features.jsx';
-import AITools from './components/AITools.jsx';
-import CloudSync from './components/CloudSync.jsx';
+import TabPanel from './components/TabPanel.jsx';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -248,82 +242,23 @@ function App() {
             </div>
           )}
 
-          {/* AI Tools - show after download starts */}
-          {currentTask && (
-            <div className="mt-4 fade-up">
-              <AITools taskId={currentTask.id} />
-            </div>
-          )}
-
-          {/* Cloud Sync - show after download starts */}
-          {currentTask && (
-            <div className="mt-4 fade-up">
-              <CloudSync taskId={currentTask.id} />
-            </div>
-          )}
-
-          {/* Download History */}
+          {/* Tabs: AI Tools / Cloud / History / Pricing / Platforms / Cookies */}
           <div className="mt-12">
-            <DownloadHistory key={refreshHistory} />
+            <TabPanel currentTask={currentTask} refreshHistory={refreshHistory} />
           </div>
 
-          {/* Ad Placeholder */}
-          <div className="mt-8 rounded-xl border border-white/[0.04] bg-white/[0.015] p-4 text-center">
-            <p className="text-[9px] text-white/15 tracking-widest uppercase">Sponsored</p>
-            <p className="text-[11px] text-white/20 mt-1.5">广告位招商中 · ads@snapvid.app</p>
-          </div>
-
-          {/* Features */}
-          <div className="mt-16 fade-up" style={{ animationDelay: '0.2s' }}>
-            <Features />
-          </div>
-
-          {/* Pricing */}
-          <div id="pricing" className="mt-16 fade-up" style={{ animationDelay: '0.25s' }}>
-            <PricingPanel />
-          </div>
-
-          {/* Platforms */}
-          <div className="mt-16 fade-up" style={{ animationDelay: '0.3s' }}>
-            <PlatformList />
-          </div>
-
-          {/* Cookie Manager */}
-          <div className="mt-8 fade-up" style={{ animationDelay: '0.35s' }}>
-            <CookieManager />
-          </div>
         </div>
       </main>
 
-      {/* Footer + Full Disclaimer */}
-      <footer id="disclaimer" className="relative z-10 border-t border-white/[0.06] py-14 mt-20">
-        <div className="max-w-3xl mx-auto px-6 space-y-8">
-          {/* Copyright Notice */}
-          <div className="text-center">
-            <p className="text-xs font-semibold text-white/40 tracking-widest uppercase mb-3">Legal Notice</p>
-            <p className="text-sm text-white/50">
-              本工具定位为「创作者视频备份工具」与「公开素材下载工具」，仅服务于合法合规的使用场景。
-            </p>
+      {/* Footer - compact */}
+      <footer id="disclaimer" className="relative z-10 border-t border-white/[0.06] py-10 mt-12">
+        <div className="max-w-3xl mx-auto px-6 space-y-4">
+          <div className="text-sm text-white/40 leading-relaxed space-y-1.5">
+            <p><strong className="text-white/60">合规声明</strong> — 仅支持下载用户自有版权/CC0/公共领域内容。不存储不缓存不分发。系统自动拦截付费平台内容。用户违规责任自负。</p>
           </div>
-
-          {/* Full Disclaimer */}
-          <div className="space-y-3 text-sm text-white/40 leading-relaxed">
-            <p><strong className="text-white/60">1. 内容合规</strong> — 本工具仅支持下载用户自有版权、CC0/CC 协议公开授权、公共领域的视频内容。系统内置版权内容识别机制，将自动拦截对受版权保护的影视、综艺、付费课程、平台专属会员内容的解析请求。</p>
-            <p><strong className="text-white/60">2. 零存储承诺</strong> — 本工具不存储、不缓存、不分发任何用户下载的视频资源。所有解析均为实时处理，资源直接从源站下载到用户本地设备，从根源规避存储侵权责任。</p>
-            <p><strong className="text-white/60">3. 用户责任</strong> — 用户应确保其下载行为符合所在地区的法律法规及目标平台的服务条款和版权政策。因用户违规使用本工具所产生的一切法律责任，由用户自行承担。</p>
-            <p><strong className="text-white/60">4. 版权保护</strong> — 请尊重内容创作者的劳动成果。严禁将下载内容用于商业目的、二次分发、公开传播或任何未经版权所有者授权的用途。</p>
-            <p><strong className="text-white/60">5. 数据安全</strong> — 我们遵循数据最小化原则，基础功能无需注册，不收集用户下载记录和个人隐私信息。用户上传的 Cookies 仅存储在本地服务器用于解析，不会传输至第三方。</p>
-            <p><strong className="text-white/60">6. 免责条款</strong> — 本工具按「现状」提供，不做任何明示或暗示的保证。对因使用或无法使用本工具造成的任何直接或间接损失，运营方不承担法律责任。使用本工具即表示您已阅读、理解并同意以上全部条款。</p>
-          </div>
-
-          {/* Contact */}
-          <div className="pt-5 border-t border-white/[0.06] flex items-center justify-between text-sm text-white/30">
+          <div className="flex items-center justify-between text-xs text-white/25 pt-3 border-t border-white/[0.04]">
             <span>侵权投诉: abuse@snapvid.app</span>
-            <span>企业合作: enterprise@snapvid.app</span>
-          </div>
-
-          <div className="text-center">
-            <p className="text-xs text-white/20">Powered by yt-dlp · For personal and educational use only</p>
+            <span>Powered by yt-dlp</span>
           </div>
         </div>
       </footer>
