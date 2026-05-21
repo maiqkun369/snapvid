@@ -10,6 +10,8 @@ import PlatformList from './components/PlatformList.jsx';
 import CookieManager from './components/CookieManager.jsx';
 import PricingPanel from './components/PricingPanel.jsx';
 import Features from './components/Features.jsx';
+import AITools from './components/AITools.jsx';
+import CloudSync from './components/CloudSync.jsx';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -243,6 +245,20 @@ function App() {
           {currentTask && (
             <div className="mt-6">
               <ProgressBar taskId={currentTask.id} onComplete={handleDownloadComplete} />
+            </div>
+          )}
+
+          {/* AI Tools - show after download starts */}
+          {currentTask && (
+            <div className="mt-4 fade-up">
+              <AITools taskId={currentTask.id} />
+            </div>
+          )}
+
+          {/* Cloud Sync - show after download starts */}
+          {currentTask && (
+            <div className="mt-4 fade-up">
+              <CloudSync taskId={currentTask.id} />
             </div>
           )}
 

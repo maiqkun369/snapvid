@@ -26,12 +26,16 @@ from api.schemas import (
 )
 from services.downloader import DownloaderService
 from services.auth import AuthService
+from services.cloud_sync import CloudSyncService
+from services.ai_tools import AIToolsService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 downloader_service = DownloaderService()
 auth_service = AuthService()
+cloud_sync_service = CloudSyncService()
+ai_tools_service = AIToolsService()
 
 
 @router.post(
@@ -213,6 +217,100 @@ async def get_me(authorization: str = "") -> UserInfo:
 async def check_permission(token: str = "") -> dict:
     """Check download permission for current user."""
     return auth_service.check_download_permission(token or None)
+
+
+# === Cloud Sync Endpoints ===
+
+@router.get("/cloud/status")
+async def cloud_status(phone: str = "") -> dict:
+    """Get cloud sync status."""
+    return cloud_sync_service.get_status(phone)
+
+
+@router.get("/cloud/auth-url")
+async def cloud_auth_url(phone: str = "") -> dict:
+    """Get Baidu NetDisk OAuth URL."""
+    url = cloud_sync_service.get_auth_url(phone)
+    if not url:
+        return {"url": "", "message": "百度网盘 API 尚未配置（需设置 BAIDU_APP_KEY 环境变量）", "configured": False}
+    return {"url": url, "configured": True}
+
+
+@router.post("/cloud/connect")
+async def cloud_connect(phone: str = "", code: str = "") -> dict:
+    """Exchange OAuth code for token."""
+    try:
+        return cloud_sync_service.exchange_code(phone, code)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/cloud/upload")
+async def cloud_upload(task_id: str = "", phone: str = "") -> dict:
+    """Upload a downloaded file to cloud."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        result = cloud_sync_service.upload_file(phone, file_path)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# === AI Tools Endpoints ===
+
+@router.get("/ai/capabilities")
+async def ai_capabilities() -> list[dict]:
+    """Get available AI tool capabilities."""
+    return ai_tools_service.get_capabilities()
+
+
+@router.post("/ai/subtitle")
+async def ai_subtitle(task_id: str = "", language: str = "auto", format: str = "srt") -> dict:
+    """Generate subtitles for a downloaded video."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        result = await ai_tools_service.generate_subtitles(file_path, language, format)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/ai/super-resolution")
+async def ai_super_resolution(task_id: str = "", scale: str = "2x") -> dict:
+    """Enhance video resolution."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        result = await ai_tools_service.super_resolution(file_path, scale)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/ai/watermark-removal")
+async def ai_watermark_removal(task_id: str = "") -> dict:
+    """Remove watermark from video."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        result = await ai_tools_service.remove_watermark(file_path)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.websocket("/ws/progress/{task_id}")
