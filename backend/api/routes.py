@@ -88,15 +88,28 @@ async def download_file(task_id: str) -> FileResponse:
     if task.status != "completed":
         raise HTTPException(status_code=400, detail="文件尚未下载完成")
 
-    file_path = downloader_service.get_downloads_dir() / task.filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="文件不存在")
+    downloads_dir = downloader_service.get_downloads_dir()
 
-    return FileResponse(
-        path=str(file_path),
-        filename=task.filename,
-        media_type="application/octet-stream",
-    )
+    # Try exact filename first
+    if task.filename:
+        file_path = downloads_dir / task.filename
+        if file_path.exists():
+            return FileResponse(
+                path=str(file_path),
+                filename=task.filename,
+                media_type="application/octet-stream",
+            )
+
+    # Fallback: scan for any file starting with task_id
+    for f in downloads_dir.iterdir():
+        if f.name.startswith(task_id) and f.is_file():
+            return FileResponse(
+                path=str(f),
+                filename=f.name,
+                media_type="application/octet-stream",
+            )
+
+    raise HTTPException(status_code=404, detail="文件不存在")
 
 
 @router.delete("/downloads/{task_id}")

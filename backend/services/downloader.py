@@ -533,10 +533,16 @@ class DownloaderService:
                         return filename
                     # Try common extensions
                     base = Path(filename).with_suffix("")
-                    for ext in [".mp4", ".webm", ".mkv", ".mp3", ".m4a", ".flac", ".wav", ".opus"]:
+                    for ext in [".mp4", ".webm", ".mkv", ".mp3", ".m4a", ".flac", ".wav", ".opus", ".avi", ".mov", ".jpg", ".png"]:
                         candidate = Path(str(base) + ext)
                         if candidate.exists():
                             return str(candidate)
+
+                # Fallback: scan download dir for any file starting with task_id
+                for f in DOWNLOADS_DIR.iterdir():
+                    if f.name.startswith(task_id) and f.is_file():
+                        return str(f)
+
                 return None
         except yt_dlp.utils.DownloadError as e:
             raise RuntimeError(f"下载失败: {str(e)}")
