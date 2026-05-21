@@ -47,6 +47,7 @@ AUTH_PLATFORMS = {
     "iqiyi": ["iqiyi.com"],
     "mango": ["mgtv.com"],
     "bilibili_vip": ["bilibili.com"],
+    "douyin": ["douyin.com"],
 }
 
 
@@ -57,6 +58,18 @@ def _normalize_url(url: str) -> str:
         url = "https://" + url
     if "bilibili.com" in url and "www.bilibili.com" not in url:
         url = url.replace("bilibili.com", "www.bilibili.com")
+
+    # Douyin: convert jingxuan?modal_id=xxx or discover?modal_id=xxx to /video/xxx
+    if "douyin.com" in url and "modal_id=" in url:
+        import re
+        match = re.search(r'modal_id=(\d+)', url)
+        if match:
+            video_id = match.group(1)
+            url = f"https://www.douyin.com/video/{video_id}"
+
+    # Douyin short link: v.douyin.com/xxx
+    # (yt-dlp handles these natively, no change needed)
+
     return url
 
 
@@ -272,10 +285,16 @@ class DownloaderService:
                 raise ValueError(
                     "该平台要求登录验证。请在「账号管理」中导入对应平台的 Cookies 后重试。"
                 )
+            elif "Fresh cookies" in err_msg or "cookies" in err_msg.lower():
+                raise ValueError(
+                    "该平台需要浏览器 Cookies 才能解析。请在页面下方「Account & Cookies」中导入抖音/对应平台的 Cookies 后重试。"
+                )
             elif "Video unavailable" in err_msg:
                 raise ValueError("视频不可用：可能是地区限制、需要会员或视频已被删除")
             elif "HTTP Error 403" in err_msg:
                 raise ValueError("访问被拒绝 (403)：请导入该平台的 Cookies 或稍后重试")
+            elif "Unsupported URL" in err_msg:
+                raise ValueError("不支持的链接格式，请复制视频的完整分享链接（而非页面URL）")
             raise ValueError(f"视频解析失败: {err_msg}")
         except Exception as e:
             raise ValueError(f"视频解析出错: {str(e)}")

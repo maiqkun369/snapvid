@@ -8,6 +8,7 @@ function CookieManager() {
   const [message, setMessage] = useState('');
 
   const platforms = [
+    { id: 'douyin', name: '抖音', hint: '抖音视频需要Cookies才能解析下载' },
     { id: 'youtube', name: 'YouTube', hint: '需要登录才能下载年龄限制/会员内容' },
     { id: 'youku', name: '优酷', hint: '需要登录下载VIP内容' },
     { id: 'tencent', name: '腾讯视频', hint: '需要登录下载VIP/付费内容' },
