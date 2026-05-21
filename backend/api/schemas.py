@@ -144,3 +144,34 @@ class BatchDownloadRequest(BaseModel):
     audio_only: bool = Field(default=False)
     format_id: str = Field(default="best")
 
+
+# === Auth ===
+
+class SendCodeRequest(BaseModel):
+    """Request to send SMS verification code."""
+
+    phone: str = Field(..., description="Phone number")
+
+
+class LoginRequest(BaseModel):
+    """Request to login with code."""
+
+    phone: str = Field(..., description="Phone number")
+    code: str = Field(..., description="6-digit verification code")
+
+
+class UserInfo(BaseModel):
+    """User info model."""
+
+    phone: str = Field(default="")
+    plan: str = Field(default="free")
+    daily_remaining: int = Field(default=3)
+    features: dict = Field(default_factory=dict)
+
+
+class LoginResponse(BaseModel):
+    """Login response with token and user info."""
+
+    token: str = Field(default="")
+    user: UserInfo = Field(default_factory=UserInfo)
+

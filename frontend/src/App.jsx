@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Agreement from './components/Agreement.jsx';
+import AuthModal from './components/AuthModal.jsx';
 import UrlInput from './components/UrlInput.jsx';
 import VideoInfo from './components/VideoInfo.jsx';
 import DownloadOptions from './components/DownloadOptions.jsx';
@@ -11,6 +12,8 @@ import PricingPanel from './components/PricingPanel.jsx';
 import Features from './components/Features.jsx';
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
   const [videoInfo, setVideoInfo] = useState(null);
   const [batchResults, setBatchResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -99,10 +102,36 @@ function App() {
     setRefreshHistory((prev) => prev + 1);
   }, []);
 
+  // Auth: restore session from token
+  useEffect(() => {
+    const token = localStorage.getItem('snapvid_token');
+    if (token) {
+      fetch('/api/auth/check-permission?token=' + token)
+        .then(res => res.json())
+        .then(data => {
+          if (data.plan) {
+            setUser({ plan: data.plan, daily_remaining: data.daily_remaining });
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  const handleLogin = (data) => {
+    setUser(data.user);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('snapvid_token');
+    setUser(null);
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#050505] text-white">
       {/* Agreement Modal */}
       <Agreement />
+      {/* Auth Modal */}
+      <AuthModal show={showAuth} onClose={() => setShowAuth(false)} onLogin={handleLogin} />
 
       {/* Aurora Background */}
       <div className="animated-bg" />
@@ -115,6 +144,27 @@ function App() {
           <div className="flex items-center gap-4">
             <a href="#disclaimer" className="text-[10px] text-white/30 hover:text-white/50 transition-colors">使用须知</a>
             <a href="#pricing" className="text-[10px] text-white/30 hover:text-white/50 transition-colors">Pro</a>
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/50">
+                  {user.phone || (user.plan === 'pro' ? 'Pro会员' : '免费版')}
+                </span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${user.plan === 'pro' ? 'bg-purple-400/20 text-purple-300' : 'bg-white/[0.06] text-white/30'}`}>
+                  {user.plan === 'pro' ? 'PRO' : 'FREE'}
+                </span>
+                <button onClick={handleLogout} className="text-[10px] text-white/20 hover:text-white/40 transition-colors ml-1">
+                  退出
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="text-[11px] text-white/60 hover:text-white bg-white/[0.06] hover:bg-white/[0.1]
+                  px-3 py-1.5 rounded-lg transition-all duration-200"
+              >
+                登录
+              </button>
+            )}
           </div>
         </div>
       </header>

@@ -17,15 +17,21 @@ from api.schemas import (
     DownloadResponse,
     DownloadTask,
     ErrorResponse,
+    LoginRequest,
+    LoginResponse,
+    SendCodeRequest,
+    UserInfo,
     VideoInfoRequest,
     VideoInfoResponse,
 )
 from services.downloader import DownloaderService
+from services.auth import AuthService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 downloader_service = DownloaderService()
+auth_service = AuthService()
 
 
 @router.post(
@@ -162,6 +168,51 @@ async def batch_download(request: BatchDownloadRequest) -> list[DownloadResponse
         except Exception as e:
             results.append(DownloadResponse(task_id="", message=str(e)))
     return results
+
+
+# === Auth Endpoints ===
+
+@router.post("/auth/send-code")
+async def send_code(request: SendCodeRequest) -> dict[str, str]:
+    """Send SMS verification code (simulated)."""
+    try:
+        msg = auth_service.send_code(request.phone)
+        return {"message": msg}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/auth/login", response_model=LoginResponse)
+async def login(request: LoginRequest) -> LoginResponse:
+    """Login with phone + verification code."""
+    try:
+        result = auth_service.login(request.phone, request.code)
+        return LoginResponse(
+            token=result["token"],
+            user=UserInfo(**result["user"]),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/auth/me", response_model=UserInfo)
+async def get_me(authorization: str = "") -> UserInfo:
+    """Get current user info from token."""
+    from fastapi import Header
+    # Token from query param or will be sent via header
+    token = authorization.replace("Bearer ", "") if authorization else ""
+    if not token:
+        raise HTTPException(status_code=401, detail="请先登录")
+    info = auth_service.get_user_info(token)
+    if not info:
+        raise HTTPException(status_code=401, detail="登录已过期，请重新登录")
+    return UserInfo(**info)
+
+
+@router.get("/auth/check-permission")
+async def check_permission(token: str = "") -> dict:
+    """Check download permission for current user."""
+    return auth_service.check_download_permission(token or None)
 
 
 @router.websocket("/ws/progress/{task_id}")
