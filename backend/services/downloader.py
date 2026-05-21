@@ -200,12 +200,8 @@ class DownloaderService:
             "socket_timeout": 15,
         }
 
-        # Try to use impersonate for better anti-bot bypass
-        try:
-            import curl_cffi  # noqa: F401
-            ydl_opts["impersonate"] = "chrome"
-        except ImportError:
-            pass
+        # Note: impersonate requires curl_cffi with specific version compatibility
+        # Currently disabled - rely on cookies + headers instead
 
         # Apply cookies if available
         cookie_file = self._get_cookie_file(url)
