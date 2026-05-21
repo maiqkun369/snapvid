@@ -545,11 +545,29 @@ class DownloaderService:
 
         try:
             while True:
-                await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
-        except asyncio.TimeoutError:
-            task = self._tasks.get(task_id)
-            if task and task.status in (DownloadStatus.COMPLETED, DownloadStatus.FAILED):
-                return
+                # Keep alive: longer timeout, loop until task finishes
+                try:
+                    await asyncio.wait_for(websocket.receive_text(), timeout=60.0)
+                except asyncio.TimeoutError:
+                    # Check if task is done
+                    task = self._tasks.get(task_id)
+                    if task and task.status in (DownloadStatus.COMPLETED, DownloadStatus.FAILED):
+                        # Send final status before closing
+                        await websocket.send_json({
+                            "progress": task.progress,
+                            "speed": "",
+                            "eta": "",
+                            "status": task.status.value,
+                        })
+                        return
+                    # Otherwise keep connection alive by sending current progress
+                    if task:
+                        await websocket.send_json({
+                            "progress": task.progress,
+                            "speed": task.speed,
+                            "eta": task.eta,
+                            "status": task.status.value,
+                        })
         except Exception:
             pass
 
