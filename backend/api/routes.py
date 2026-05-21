@@ -60,10 +60,24 @@ async def get_video_info(request: VideoInfoRequest) -> VideoInfoResponse:
     response_model=DownloadResponse,
     responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
 )
-async def start_download(request: DownloadRequest) -> DownloadResponse:
-    """Start a download task."""
+async def start_download(request: DownloadRequest, token: str = "") -> DownloadResponse:
+    """Start a download task. Requires login for quota tracking."""
+    # Check permission
+    perm = auth_service.check_download_permission(token or None)
+    if not perm.get("allowed"):
+        raise HTTPException(status_code=403, detail=perm.get("message", "下载次数已用完，请升级 Pro"))
+
+    # Determine owner
+    owner = "anonymous"
+    if token:
+        payload = auth_service._verify_token(token)
+        if payload:
+            owner = payload.get("phone", "anonymous")
+
     try:
-        task_id = await downloader_service.start_download(request)
+        task_id = await downloader_service.start_download(request, owner=owner)
+        # Record download for quota
+        auth_service.record_download(token or None)
         return DownloadResponse(task_id=task_id, message="下载任务已创建")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -73,9 +87,14 @@ async def start_download(request: DownloadRequest) -> DownloadResponse:
 
 
 @router.get("/downloads", response_model=list[DownloadTask])
-async def get_download_history() -> list[DownloadTask]:
-    """Get all download tasks."""
-    return downloader_service.get_all_tasks()
+async def get_download_history(token: str = "") -> list[DownloadTask]:
+    """Get download tasks for current user."""
+    owner = "anonymous"
+    if token:
+        payload = auth_service._verify_token(token)
+        if payload:
+            owner = payload.get("phone", "anonymous")
+    return downloader_service.get_tasks_by_owner(owner)
 
 
 @router.get("/downloads/{task_id}/file")

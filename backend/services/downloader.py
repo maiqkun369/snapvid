@@ -306,7 +306,7 @@ class DownloaderService:
 
     # === Download ===
 
-    async def start_download(self, request: DownloadRequest) -> str:
+    async def start_download(self, request: DownloadRequest, owner: str = "anonymous") -> str:
         """Start a download task with full feature support."""
         if not request.url or not request.url.strip():
             raise ValueError("URL不能为空")
@@ -320,6 +320,7 @@ class DownloaderService:
             id=task_id,
             url=request.url,
             title="获取中...",
+            owner=owner,
             status=DownloadStatus.PENDING,
             progress=0.0,
             speed="",
@@ -664,6 +665,12 @@ class DownloaderService:
 
     def get_all_tasks(self) -> list[DownloadTask]:
         tasks = list(self._tasks.values())
+        tasks.sort(key=lambda t: t.created_at, reverse=True)
+        return tasks
+
+    def get_tasks_by_owner(self, owner: str) -> list[DownloadTask]:
+        """Get tasks filtered by owner. Anonymous sees all anonymous tasks."""
+        tasks = [t for t in self._tasks.values() if t.owner == owner]
         tasks.sort(key=lambda t: t.created_at, reverse=True)
         return tasks
 

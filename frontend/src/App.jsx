@@ -76,7 +76,8 @@ function App() {
   const handleDownload = useCallback(async (options) => {
     setError('');
     try {
-      const response = await fetch('/api/download', {
+      const token = localStorage.getItem('snapvid_token') || '';
+      const response = await fetch(`/api/download?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(options),

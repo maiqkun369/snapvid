@@ -12,7 +12,8 @@ function DownloadHistory() {
    */
   const fetchHistory = async () => {
     try {
-      const response = await fetch('/api/downloads');
+      const token = localStorage.getItem('snapvid_token') || '';
+      const response = await fetch(`/api/downloads?token=${token}`);
       if (response.ok) {
         const data = await response.json();
         setTasks(data);

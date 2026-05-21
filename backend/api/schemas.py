@@ -86,6 +86,7 @@ class DownloadTask(BaseModel):
     id: str = Field(default="", description="Task UUID")
     url: str = Field(default="", description="Original URL")
     title: str = Field(default="", description="Video title")
+    owner: str = Field(default="anonymous", description="Owner phone or anonymous")
     status: DownloadStatus = Field(default=DownloadStatus.PENDING)
     progress: float = Field(default=0.0, description="Download progress 0-100")
     speed: str = Field(default="", description="Download speed")
