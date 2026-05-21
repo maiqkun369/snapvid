@@ -200,6 +200,13 @@ class DownloaderService:
             "socket_timeout": 15,
         }
 
+        # Try to use impersonate for better anti-bot bypass
+        try:
+            import curl_cffi  # noqa: F401
+            ydl_opts["impersonate"] = "chrome"
+        except ImportError:
+            pass
+
         # Apply cookies if available
         cookie_file = self._get_cookie_file(url)
         if cookie_file:
@@ -288,7 +295,8 @@ class DownloaderService:
                 )
             elif "Fresh cookies" in err_msg or "cookies" in err_msg.lower():
                 raise ValueError(
-                    "该平台需要浏览器 Cookies 才能解析。请在页面下方「Account & Cookies」中导入抖音/对应平台的 Cookies 后重试。"
+                    "抖音需要包含 ttwid/msToken 的完整 Cookies（需通过浏览器扩展「Get cookies.txt LOCALLY」导出，"
+                    "不能用书签脚本方式）。请使用方法二：安装 Chrome 扩展后，在抖音网页上导出完整 Cookies。"
                 )
             elif "Video unavailable" in err_msg:
                 raise ValueError("视频不可用：可能是地区限制、需要会员或视频已被删除")

@@ -142,10 +142,10 @@ function App() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span className="text-xs text-white/40 tracking-widest uppercase">Creator Backup Tool</span>
-          <div className="flex items-center gap-4">
-            <a href="#disclaimer" className="text-[10px] text-white/30 hover:text-white/50 transition-colors">使用须知</a>
-            <a href="#pricing" className="text-[10px] text-white/30 hover:text-white/50 transition-colors">Pro</a>
+          <span className="text-sm text-white/50 tracking-widest uppercase">Creator Backup Tool</span>
+          <div className="flex items-center gap-5">
+            <a href="#disclaimer" className="text-xs text-white/40 hover:text-white/60 transition-colors">使用须知</a>
+            <a href="#pricing" className="text-xs text-white/40 hover:text-white/60 transition-colors">Pro</a>
             {user ? (
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-white/50">
@@ -182,7 +182,7 @@ function App() {
               <br />
               <span className="bg-gradient-to-r from-cyan-300 via-purple-300 to-emerald-300 bg-clip-text text-transparent font-normal">Backup Tool.</span>
             </h1>
-            <p className="text-white/35 text-sm mt-5 font-light leading-relaxed max-w-md mx-auto">
+            <p className="text-white/40 text-base mt-5 font-light leading-relaxed max-w-md mx-auto">
               安全备份你的原创作品，下载公开授权素材。<br />
               支持 1000+ 平台，不存储任何内容。
             </p>
@@ -190,7 +190,7 @@ function App() {
 
           {/* Compliance Banner */}
           <div className="mb-8 px-4 py-3 rounded-xl bg-cyan-500/[0.05] border border-cyan-500/[0.1] text-center fade-up">
-            <p className="text-[11px] text-cyan-300/60">
+            <p className="text-sm text-cyan-300/70">
               仅支持下载用户自有版权 / CC0 公开授权 / 公共领域内容 · 不存储不缓存不分发 · <a href="mailto:abuse@snapvid.app" className="underline hover:text-cyan-200/80">侵权投诉</a>
             </p>
           </div>
