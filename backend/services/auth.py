@@ -144,22 +144,29 @@ class AuthService:
 
         db = _get_db()
 
-        # Verify code
-        row = db.execute(
-            "SELECT * FROM codes WHERE phone = ? AND code = ? AND used = 0",
-            (phone, code),
-        ).fetchone()
+        # Dev mode: universal code 000000 always works
+        is_dev_code = (code == "000000")
 
-        if not row:
-            db.close()
-            raise ValueError("验证码错误或已过期")
+        if not is_dev_code:
+            # Verify code from database
+            row = db.execute(
+                "SELECT * FROM codes WHERE phone = ? AND code = ? AND used = 0",
+                (phone, code),
+            ).fetchone()
 
-        if time.time() > row["expires_at"]:
-            db.close()
-            raise ValueError("验证码已过期，请重新获取")
+            if not row:
+                db.close()
+                raise ValueError("验证码错误或已过期")
 
-        # Mark code as used
-        db.execute("UPDATE codes SET used = 1 WHERE phone = ? AND code = ?", (phone, code))
+            if time.time() > row["expires_at"]:
+                db.close()
+                raise ValueError("验证码已过期，请重新获取")
+
+            # Mark code as used
+            db.execute("UPDATE codes SET used = 1 WHERE phone = ? AND code = ?", (phone, code))
+        else:
+            # Dev universal code - just clear any existing codes
+            db.execute("DELETE FROM codes WHERE phone = ?", (phone,))
 
         # Create or get user
         user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
