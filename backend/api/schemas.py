@@ -37,6 +37,7 @@ class VideoInfoResponse(BaseModel):
     thumbnail: str = Field(default="", description="Thumbnail URL")
     uploader: str = Field(default="", description="Uploader name")
     platform: str = Field(default="", description="Platform name")
+    description: str = Field(default="", description="Video description/copywriting")
     formats: list[VideoFormat] = Field(default_factory=list, description="Available formats")
     subtitles: list[str] = Field(default_factory=list, description="Available subtitle languages")
     chapters: Optional[list[dict]] = Field(default=None, description="Video chapters")
@@ -62,6 +63,12 @@ class DownloadRequest(BaseModel):
     sponsor_block: bool = Field(default=False, description="Remove sponsor segments (YouTube)")
     proxy: Optional[str] = Field(default=None, description="Proxy URL")
     output_format: str = Field(default="mp4", description="Preferred output container: mp4, mkv, webm")
+    # New features
+    concurrent_fragments: int = Field(default=1, description="Concurrent download fragments (1-16)")
+    download_sections: Optional[str] = Field(default=None, description="Time range to download e.g. *00:01:00-00:02:30")
+    output_template: Optional[str] = Field(default=None, description="Custom filename template")
+    thumbnail_only: bool = Field(default=False, description="Download only thumbnail image")
+    remux_format: Optional[str] = Field(default=None, description="Remux to format without re-encoding")
 
 
 class DownloadStatus(str, Enum):

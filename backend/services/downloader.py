@@ -268,6 +268,7 @@ class DownloaderService:
             thumbnail=info.get("thumbnail", ""),
             uploader=info.get("uploader", info.get("channel", "未知")),
             platform=info.get("extractor_key", info.get("extractor", "未知平台")),
+            description=info.get("description", "") or "",
             formats=formats,
             subtitles=all_subs,
             chapters=chapters,
@@ -424,6 +425,53 @@ class DownloaderService:
         # Proxy
         if request.proxy:
             ydl_opts["proxy"] = request.proxy
+
+        # === New features ===
+
+        # Multi-thread concurrent fragments (Pro feature)
+        if request.concurrent_fragments and request.concurrent_fragments > 1:
+            ydl_opts["concurrent_fragment_downloads"] = min(request.concurrent_fragments, 16)
+
+        # Download specific time section
+        if request.download_sections:
+            ydl_opts["download_ranges"] = lambda info, ydl: [
+                {"start_time": self._parse_time(request.download_sections.split("-")[0]),
+                 "end_time": self._parse_time(request.download_sections.split("-")[1])}
+            ] if "-" in request.download_sections else []
+            # Use simpler approach via postprocessor
+            ydl_opts["postprocessor_args"] = {"ffmpeg": []}
+            # Actually use download_sections format
+            ydl_opts.pop("download_ranges", None)
+            ydl_opts["download_ranges"] = None
+            # yt-dlp native section support
+            if "-" in request.download_sections:
+                parts = request.download_sections.split("-")
+                ydl_opts["postprocessor_args"] = {
+                    "ffmpeg": ["-ss", parts[0].strip(), "-to", parts[1].strip()]
+                }
+                ydl_opts["force_keyframes_at_cuts"] = True
+
+        # Custom filename template
+        if request.output_template:
+            safe_template = request.output_template.replace("/", "_").replace("\\", "_")
+            output_template = str(DOWNLOADS_DIR / f"{task_id}_{safe_template}.%(ext)s")
+            ydl_opts["outtmpl"] = output_template
+
+        # Thumbnail only download
+        if request.thumbnail_only:
+            ydl_opts["skip_download"] = True
+            ydl_opts["writethumbnail"] = True
+            ydl_opts["postprocessors"] = [{
+                "key": "FFmpegThumbnailsConvertor",
+                "format": "png",
+            }]
+
+        # Remux (format conversion without re-encoding)
+        if request.remux_format and not request.audio_only:
+            ydl_opts.setdefault("postprocessors", []).append({
+                "key": "FFmpegVideoRemuxer",
+                "preferedformat": request.remux_format,
+            })
 
         try:
             downloaded_file = await loop.run_in_executor(
@@ -592,6 +640,17 @@ class DownloaderService:
 
     def unsubscribe_progress(self, task_id: str) -> None:
         self._websockets.pop(task_id, None)
+
+    @staticmethod
+    def _parse_time(time_str: str) -> float:
+        """Parse time string like '01:30' or '1:02:30' to seconds."""
+        time_str = time_str.strip()
+        parts = time_str.split(":")
+        if len(parts) == 3:
+            return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+        elif len(parts) == 2:
+            return int(parts[0]) * 60 + float(parts[1])
+        return float(time_str)
 
     def get_all_tasks(self) -> list[DownloadTask]:
         tasks = list(self._tasks.values())

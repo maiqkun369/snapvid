@@ -17,6 +17,11 @@ function DownloadOptions({ videoInfo, onDownload }) {
   const [sponsorBlock, setSponsorBlock] = useState(false);
   const [outputFormat, setOutputFormat] = useState('mp4');
   const [proxy, setProxy] = useState('');
+  // New features
+  const [concurrentFragments, setConcurrentFragments] = useState(1);
+  const [downloadSections, setDownloadSections] = useState('');
+  const [outputTemplate, setOutputTemplate] = useState('');
+  const [remuxFormat, setRemuxFormat] = useState('');
 
   const { videoFormats, audioFormats } = useMemo(() => {
     const formats = videoInfo?.formats || [];
@@ -36,7 +41,7 @@ function DownloadOptions({ videoInfo, onDownload }) {
     return `${bytes} B`;
   };
 
-  const handleDownload = () => {
+  const handleDownload = (thumbnailOnly = false) => {
     onDownload({
       url: videoInfo._url,
       format_id: audioOnly ? 'best' : selectedFormat,
@@ -54,6 +59,11 @@ function DownloadOptions({ videoInfo, onDownload }) {
       sponsor_block: sponsorBlock,
       output_format: outputFormat,
       proxy: proxy || null,
+      concurrent_fragments: concurrentFragments,
+      download_sections: downloadSections || null,
+      output_template: outputTemplate || null,
+      thumbnail_only: thumbnailOnly,
+      remux_format: remuxFormat || null,
     });
   };
 
@@ -225,20 +235,101 @@ function DownloadOptions({ videoInfo, onDownload }) {
               <input type="text" value={proxy} onChange={(e) => setProxy(e.target.value)}
                 placeholder="socks5://127.0.0.1:1080" className="input-field text-sm" />
             </div>
+
+            {/* === New Features === */}
+            <div className="pt-3 mt-3 border-t border-white/[0.04] space-y-3">
+              <p className="text-[10px] text-white/25 tracking-widest uppercase">进阶功能</p>
+
+              {/* Video section clip */}
+              <div>
+                <label className="block text-xs text-white/40 mb-2">片段截取 (起止时间)</label>
+                <input type="text" value={downloadSections} onChange={(e) => setDownloadSections(e.target.value)}
+                  placeholder="如 00:01:00-00:02:30" className="input-field text-sm" />
+                <p className="text-[10px] text-white/20 mt-1">留空下载完整视频，填入时间范围仅下载该片段</p>
+              </div>
+
+              {/* Concurrent fragments */}
+              <div>
+                <label className="block text-xs text-white/40 mb-2">多线程加速 (并发数)</label>
+                <div className="flex items-center gap-3">
+                  <input type="range" min="1" max="16" value={concurrentFragments}
+                    onChange={(e) => setConcurrentFragments(parseInt(e.target.value))}
+                    className="flex-1 h-1.5 bg-white/[0.08] rounded-full appearance-none cursor-pointer" />
+                  <span className="text-xs text-white/50 w-8 text-right">{concurrentFragments}x</span>
+                </div>
+                {concurrentFragments > 1 && (
+                  <p className="text-[10px] text-purple-300/50 mt-1">PRO 功能 · {concurrentFragments} 线程并发下载</p>
+                )}
+              </div>
+
+              {/* Remux format conversion */}
+              <div>
+                <label className="block text-xs text-white/40 mb-2">格式转换 (无损重封装)</label>
+                <select value={remuxFormat} onChange={(e) => setRemuxFormat(e.target.value)} className="input-field text-sm">
+                  <option value="">不转换</option>
+                  <option value="mp4">转为 MP4</option>
+                  <option value="mkv">转为 MKV</option>
+                  <option value="webm">转为 WebM</option>
+                  <option value="mov">转为 MOV</option>
+                  <option value="avi">转为 AVI</option>
+                </select>
+              </div>
+
+              {/* Custom filename template */}
+              <div>
+                <label className="block text-xs text-white/40 mb-2">自定义文件名</label>
+                <input type="text" value={outputTemplate} onChange={(e) => setOutputTemplate(e.target.value)}
+                  placeholder="留空使用默认，支持: %(title)s %(uploader)s %(upload_date)s" className="input-field text-sm" />
+                <p className="text-[10px] text-white/20 mt-1">变量: %(title)s %(uploader)s %(upload_date)s %(resolution)s %(ext)s</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Download Button */}
-      <button onClick={handleDownload}
-        className="w-full bg-white text-gray-900 font-medium py-3.5 rounded-xl
-          flex items-center justify-center gap-2 transition-all duration-300
-          hover:scale-[1.01] hover:shadow-lg hover:shadow-white/5 active:scale-[0.99]">
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        开始下载
-      </button>
+      {/* Action Buttons */}
+      <div className="flex gap-2">
+        <button onClick={() => handleDownload(false)}
+          className="flex-1 bg-white text-gray-900 font-medium py-3.5 rounded-xl
+            flex items-center justify-center gap-2 transition-all duration-300
+            hover:scale-[1.01] hover:shadow-lg hover:shadow-white/5 active:scale-[0.99]">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          开始下载
+        </button>
+        <button onClick={() => handleDownload(true)}
+          className="px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.1]
+            text-white/60 text-sm transition-all duration-200
+            hover:bg-white/[0.1] hover:text-white/80 active:scale-[0.98]"
+          title="仅下载封面图"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Description/Copywriting extract */}
+      {videoInfo.description && (
+        <div className="pt-3 border-t border-white/[0.04]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] text-white/25 tracking-widest uppercase">Video Description</span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(videoInfo.description);
+                alert('文案已复制到剪贴板');
+              }}
+              className="text-[11px] text-cyan-400/60 hover:text-cyan-300 transition-colors"
+            >
+              复制文案
+            </button>
+          </div>
+          <p className="text-[11px] text-white/30 leading-relaxed line-clamp-3">
+            {videoInfo.description.slice(0, 200)}{videoInfo.description.length > 200 ? '...' : ''}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
