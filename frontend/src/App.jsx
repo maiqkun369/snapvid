@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import Agreement from './components/Agreement.jsx';
 import UrlInput from './components/UrlInput.jsx';
 import VideoInfo from './components/VideoInfo.jsx';
 import DownloadOptions from './components/DownloadOptions.jsx';
@@ -6,9 +7,12 @@ import ProgressBar from './components/ProgressBar.jsx';
 import DownloadHistory from './components/DownloadHistory.jsx';
 import PlatformList from './components/PlatformList.jsx';
 import CookieManager from './components/CookieManager.jsx';
+import PricingPanel from './components/PricingPanel.jsx';
+import Features from './components/Features.jsx';
 
 function App() {
   const [videoInfo, setVideoInfo] = useState(null);
+  const [batchResults, setBatchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentTask, setCurrentTask] = useState(null);
@@ -18,6 +22,7 @@ function App() {
     setLoading(true);
     setError('');
     setVideoInfo(null);
+    setBatchResults(null);
     setCurrentTask(null);
 
     try {
@@ -42,9 +47,35 @@ function App() {
     }
   }, []);
 
+  const handleBatchParse = useCallback(async (urls) => {
+    setLoading(true);
+    setError('');
+    setVideoInfo(null);
+    setBatchResults(null);
+
+    try {
+      const response = await fetch('/api/batch-info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || '批量解析失败');
+      }
+
+      const data = await response.json();
+      setBatchResults(data);
+    } catch (err) {
+      setError(err.message || '批量解析失败');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleDownload = useCallback(async (options) => {
     setError('');
-
     try {
       const response = await fetch('/api/download', {
         method: 'POST',
@@ -70,43 +101,56 @@ function App() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#050505] text-white">
+      {/* Agreement Modal */}
+      <Agreement />
+
       {/* Aurora Background */}
       <div className="animated-bg" />
-      {/* Grain Overlay */}
       <div className="grain-overlay" />
 
-      {/* Header - minimal, floating */}
+      {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="text-xs text-white/40 tracking-widest uppercase">1000+ platforms</span>
+          <span className="text-xs text-white/40 tracking-widest uppercase">Creator Backup Tool</span>
+          <div className="flex items-center gap-4">
+            <a href="#disclaimer" className="text-[10px] text-white/30 hover:text-white/50 transition-colors">使用须知</a>
+            <a href="#pricing" className="text-[10px] text-white/30 hover:text-white/50 transition-colors">Pro</a>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="relative z-10 pt-32 pb-20">
+      {/* Main Content */}
+      <main className="relative z-10 pt-28 pb-20">
         <div className="max-w-3xl mx-auto px-6">
-          {/* Hero Text */}
-          <div className="text-center mb-16 fade-up">
+
+          {/* Hero */}
+          <div className="text-center mb-14 fade-up">
             <h1 className="text-4xl sm:text-5xl font-light tracking-tight leading-tight mb-4">
-              <span className="text-white/90">Grab any video,</span>
+              <span className="text-white/90">Your Creative</span>
               <br />
-              <span className="bg-gradient-to-r from-cyan-300 via-purple-300 to-emerald-300 bg-clip-text text-transparent font-normal">anywhere.</span>
+              <span className="bg-gradient-to-r from-cyan-300 via-purple-300 to-emerald-300 bg-clip-text text-transparent font-normal">Backup Tool.</span>
             </h1>
-            <p className="text-white/35 text-base mt-6 font-light tracking-wide">
-              Paste a link. Choose quality. Download.
+            <p className="text-white/35 text-sm mt-5 font-light leading-relaxed max-w-md mx-auto">
+              安全备份你的原创作品，下载公开授权素材。<br />
+              支持 1000+ 平台，不存储任何内容。
+            </p>
+          </div>
+
+          {/* Compliance Banner */}
+          <div className="mb-8 px-4 py-3 rounded-xl bg-cyan-500/[0.05] border border-cyan-500/[0.1] text-center fade-up">
+            <p className="text-[11px] text-cyan-300/60">
+              仅支持下载用户自有版权 / CC0 公开授权 / 公共领域内容 · 不存储不缓存不分发 · <a href="mailto:abuse@snapvid.app" className="underline hover:text-cyan-200/80">侵权投诉</a>
             </p>
           </div>
 
           {/* URL Input */}
           <div className="fade-up" style={{ animationDelay: '0.1s' }}>
-            <UrlInput onParse={handleParse} loading={loading} />
+            <UrlInput onParse={handleParse} onBatchParse={handleBatchParse} loading={loading} />
           </div>
 
           {/* Error */}
           {error && (
-            <div className="mt-6 px-5 py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-300/90 text-sm font-light">
+            <div className="mt-6 px-5 py-4 rounded-2xl bg-red-500/[0.08] border border-red-500/[0.15] text-red-300/80 text-sm font-light">
               {error}
             </div>
           )}
@@ -115,6 +159,26 @@ function App() {
           {videoInfo && (
             <div className="mt-8 fade-up">
               <VideoInfo info={videoInfo} />
+            </div>
+          )}
+
+          {/* Batch Results */}
+          {batchResults && (
+            <div className="mt-8 space-y-2 fade-up">
+              <p className="text-xs text-white/30 mb-3">批量解析结果 ({batchResults.filter(r => r.success).length}/{batchResults.length} 成功)</p>
+              {batchResults.map((item, i) => (
+                <div key={i} className={`px-4 py-3 rounded-xl border ${item.success ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-red-500/[0.05] border-red-500/[0.1]'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-white/60 truncate">{item.success ? item.title : item.url}</p>
+                      <p className="text-[10px] text-white/25 mt-0.5">{item.success ? `${item.platform} · ${item.duration_string}` : item.error}</p>
+                    </div>
+                    {item.success && (
+                      <span className="text-[9px] text-emerald-400/60 ml-2 shrink-0">可下载</span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -137,36 +201,63 @@ function App() {
             <DownloadHistory key={refreshHistory} />
           </div>
 
-        {/* Platforms */}
-        <div className="mt-16 fade-up" style={{ animationDelay: '0.2s' }}>
-          <PlatformList />
-        </div>
+          {/* Ad Placeholder */}
+          <div className="mt-8 rounded-xl border border-white/[0.04] bg-white/[0.015] p-4 text-center">
+            <p className="text-[9px] text-white/15 tracking-widest uppercase">Sponsored</p>
+            <p className="text-[11px] text-white/20 mt-1.5">广告位招商中 · ads@snapvid.app</p>
+          </div>
 
-        {/* Cookie Manager */}
-        <div className="mt-8 fade-up" style={{ animationDelay: '0.25s' }}>
-          <CookieManager />
-        </div>
+          {/* Features */}
+          <div className="mt-16 fade-up" style={{ animationDelay: '0.2s' }}>
+            <Features />
+          </div>
+
+          {/* Pricing */}
+          <div id="pricing" className="mt-16 fade-up" style={{ animationDelay: '0.25s' }}>
+            <PricingPanel />
+          </div>
+
+          {/* Platforms */}
+          <div className="mt-16 fade-up" style={{ animationDelay: '0.3s' }}>
+            <PlatformList />
+          </div>
+
+          {/* Cookie Manager */}
+          <div className="mt-8 fade-up" style={{ animationDelay: '0.35s' }}>
+            <CookieManager />
+          </div>
         </div>
       </main>
 
-      {/* Footer + Disclaimer */}
-      <footer className="relative z-10 border-t border-white/[0.04] py-10 mt-16">
-        <div className="max-w-3xl mx-auto px-6 space-y-6">
-          {/* Disclaimer */}
-          <div className="space-y-3">
-            <p className="text-[10px] text-white/15 tracking-widest uppercase text-center">Disclaimer</p>
-            <div className="text-[11px] text-white/20 leading-relaxed space-y-2">
-              <p>1. 本工具基于开源项目 yt-dlp 构建，仅提供视频链接解析和下载的技术实现，不提供任何视频内容的存储、托管或分发服务。</p>
-              <p>2. 用户在使用本工具前，应确保其行为符合所在地区的法律法规，以及目标平台的服务条款和版权政策。因用户违规使用本工具所产生的一切法律责任，由用户自行承担。</p>
-              <p>3. 本工具不鼓励、不支持任何侵犯版权的行为。请尊重内容创作者的劳动成果，不得将下载内容用于商业目的、二次分发、公开传播或任何未经版权所有者授权的用途。</p>
-              <p>4. 用户上传的 Cookies 信息仅存储在本地服务器中用于视频解析，不会被上传至任何第三方服务器。用户应妥善保管自己的账号信息，因 Cookies 泄露导致的账号安全问题，本工具不承担责任。</p>
-              <p>5. 本工具按「现状」提供，不做任何明示或暗示的保证。对于因使用或无法使用本工具而造成的任何直接或间接损失，开发者不承担任何责任。</p>
-              <p>6. 使用本工具即表示您已阅读、理解并同意以上全部条款。如不同意，请立即停止使用。</p>
-            </div>
+      {/* Footer + Full Disclaimer */}
+      <footer id="disclaimer" className="relative z-10 border-t border-white/[0.04] py-12 mt-16">
+        <div className="max-w-3xl mx-auto px-6 space-y-8">
+          {/* Copyright Notice */}
+          <div className="text-center">
+            <p className="text-[10px] text-white/15 tracking-widest uppercase mb-2">Legal Notice</p>
+            <p className="text-[11px] text-white/30">
+              本工具定位为「创作者视频备份工具」与「公开素材下载工具」，仅服务于合法合规的使用场景。
+            </p>
           </div>
 
-          <div className="pt-4 border-t border-white/[0.03] text-center">
-            <p className="text-[10px] text-white/15">Powered by yt-dlp | For personal and educational use only</p>
+          {/* Full Disclaimer */}
+          <div className="space-y-2.5 text-[11px] text-white/20 leading-relaxed">
+            <p><strong className="text-white/30">1. 内容合规</strong> — 本工具仅支持下载用户自有版权、CC0/CC 协议公开授权、公共领域的视频内容。系统内置版权内容识别机制，将自动拦截对受版权保护的影视、综艺、付费课程、平台专属会员内容的解析请求。</p>
+            <p><strong className="text-white/30">2. 零存储承诺</strong> — 本工具不存储、不缓存、不分发任何用户下载的视频资源。所有解析均为实时处理，资源直接从源站下载到用户本地设备，从根源规避存储侵权责任。</p>
+            <p><strong className="text-white/30">3. 用户责任</strong> — 用户应确保其下载行为符合所在地区的法律法规及目标平台的服务条款和版权政策。因用户违规使用本工具所产生的一切法律责任，由用户自行承担。</p>
+            <p><strong className="text-white/30">4. 版权保护</strong> — 请尊重内容创作者的劳动成果。严禁将下载内容用于商业目的、二次分发、公开传播或任何未经版权所有者授权的用途。</p>
+            <p><strong className="text-white/30">5. 数据安全</strong> — 我们遵循数据最小化原则，基础功能无需注册，不收集用户下载记录和个人隐私信息。用户上传的 Cookies 仅存储在本地服务器用于解析，不会传输至第三方。</p>
+            <p><strong className="text-white/30">6. 免责条款</strong> — 本工具按「现状」提供，不做任何明示或暗示的保证。对因使用或无法使用本工具造成的任何直接或间接损失，运营方不承担法律责任。使用本工具即表示您已阅读、理解并同意以上全部条款。</p>
+          </div>
+
+          {/* Contact */}
+          <div className="pt-4 border-t border-white/[0.03] flex items-center justify-between text-[10px] text-white/15">
+            <span>侵权投诉: abuse@snapvid.app</span>
+            <span>企业合作: enterprise@snapvid.app</span>
+          </div>
+
+          <div className="text-center">
+            <p className="text-[9px] text-white/10">Powered by yt-dlp · For personal and educational use only</p>
           </div>
         </div>
       </footer>

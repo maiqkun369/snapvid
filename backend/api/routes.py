@@ -8,6 +8,9 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 
 from api.schemas import (
+    BatchDownloadRequest,
+    BatchInfoItem,
+    BatchInfoRequest,
     CookieStatusResponse,
     CookieUploadRequest,
     DownloadRequest,
@@ -117,6 +120,48 @@ async def delete_cookies(platform: str) -> dict[str, str]:
     """Delete cookies for a platform."""
     downloader_service.delete_cookies(platform)
     return {"message": f"{platform} cookies 已删除"}
+
+
+# === Batch Operations ===
+
+@router.post("/batch-info", response_model=list[BatchInfoItem])
+async def batch_get_info(request: BatchInfoRequest) -> list[BatchInfoItem]:
+    """Batch extract video info for multiple URLs (max 10)."""
+    urls = request.urls[:10]  # Cap at 10
+    results = []
+    for url in urls:
+        try:
+            info = await downloader_service.get_video_info(url)
+            results.append(BatchInfoItem(
+                url=url,
+                success=True,
+                title=info.title,
+                platform=info.platform,
+                duration_string=info.duration_string,
+                thumbnail=info.thumbnail,
+            ))
+        except Exception as e:
+            results.append(BatchInfoItem(url=url, success=False, error=str(e)))
+    return results
+
+
+@router.post("/batch-download")
+async def batch_download(request: BatchDownloadRequest) -> list[DownloadResponse]:
+    """Batch start downloads for multiple URLs (max 10)."""
+    urls = request.urls[:10]
+    results = []
+    for url in urls:
+        try:
+            dl_request = DownloadRequest(
+                url=url,
+                audio_only=request.audio_only,
+                format_id=request.format_id,
+            )
+            task_id = await downloader_service.start_download(dl_request)
+            results.append(DownloadResponse(task_id=task_id, message="已创建"))
+        except Exception as e:
+            results.append(DownloadResponse(task_id="", message=str(e)))
+    return results
 
 
 @router.websocket("/ws/progress/{task_id}")

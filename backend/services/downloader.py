@@ -60,6 +60,40 @@ def _normalize_url(url: str) -> str:
     return url
 
 
+# === Copyright Compliance Filter ===
+
+BLOCKED_PATTERNS = [
+    # Paid video platforms - full episodes
+    "iqiyi.com/v_",
+    "youku.com/v_show",
+    "mgtv.com/b/",
+    # International streaming
+    "netflix.com",
+    "disneyplus.com",
+    "hbomax.com",
+    "hulu.com",
+    "primevideo.com",
+    "peacocktv.com",
+    "paramountplus.com",
+    "crunchyroll.com/watch",
+]
+
+BLOCKED_KEYWORDS_IN_TITLE = ["会员专享", "VIP专属", "付费观看", "独播", "会员抢先"]
+
+
+def _check_copyright_compliance(url: str) -> Optional[str]:
+    """Check if URL targets copyrighted content. Returns error message or None."""
+    url_lower = url.lower()
+    for pattern in BLOCKED_PATTERNS:
+        if pattern.lower() in url_lower:
+            return (
+                "为保护版权，本工具不支持下载该平台的影视剧/付费内容。"
+                "本工具仅支持下载用户自有版权或公开授权的内容。"
+                "如需备份您的原创作品，请使用对应平台的官方创作者工具导出。"
+            )
+    return None
+
+
 def _detect_platform(url: str) -> Optional[str]:
     """Detect which platform a URL belongs to."""
     for platform, domains in AUTH_PLATFORMS.items():
@@ -127,6 +161,13 @@ class DownloaderService:
         """Extract video information from URL with full yt-dlp features."""
         if not url or not url.strip():
             raise ValueError("URL不能为空")
+
+        url = _normalize_url(url)
+
+        # Copyright compliance check
+        block_msg = _check_copyright_compliance(url)
+        if block_msg:
+            raise ValueError(block_msg)
 
         url = _normalize_url(url)
 

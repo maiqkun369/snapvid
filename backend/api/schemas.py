@@ -115,3 +115,32 @@ class CookieStatusResponse(BaseModel):
     platform: str = Field(default="")
     has_cookies: bool = Field(default=False)
     expires_hint: str = Field(default="")
+
+
+# === Batch Operations ===
+
+class BatchInfoRequest(BaseModel):
+    """Request for batch video info extraction."""
+
+    urls: list[str] = Field(..., description="List of video URLs (max 10)")
+
+
+class BatchInfoItem(BaseModel):
+    """Single item result in batch info response."""
+
+    url: str = Field(default="")
+    success: bool = Field(default=False)
+    title: str = Field(default="")
+    platform: str = Field(default="")
+    duration_string: str = Field(default="")
+    thumbnail: str = Field(default="")
+    error: str = Field(default="")
+
+
+class BatchDownloadRequest(BaseModel):
+    """Request for batch download."""
+
+    urls: list[str] = Field(..., description="List of video URLs (max 10)")
+    audio_only: bool = Field(default=False)
+    format_id: str = Field(default="best")
+
