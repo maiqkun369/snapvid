@@ -207,6 +207,9 @@ function App() {
           <span className="text-base font-semibold text-white/80 tracking-wide">SnapVid</span>
           <div className="flex items-center gap-6">
             <a href="#disclaimer" className="text-sm text-white/50 hover:text-white/80 transition-colors">使用须知</a>
+            {user && (
+              <a href="#/dashboard" className="text-sm text-cyan-400/70 hover:text-cyan-300 transition-colors font-medium">控制台</a>
+            )}
             {user ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-white/60">
