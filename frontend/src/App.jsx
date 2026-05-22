@@ -272,22 +272,72 @@ function App() {
           )}
 
           {/* Batch Results */}
-          {batchResults && (
-            <div className="mt-8 space-y-2 fade-up">
-              <p className="text-xs text-white/30 mb-3">批量解析结果 ({batchResults.filter(r => r.success).length}/{batchResults.length} 成功)</p>
-              {batchResults.map((item, i) => (
-                <div key={i} className={`px-4 py-3 rounded-xl border ${item.success ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-red-500/[0.05] border-red-500/[0.1]'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-white/60 truncate">{item.success ? item.title : item.url}</p>
-                      <p className="text-[10px] text-white/25 mt-0.5">{item.success ? `${item.platform} · ${item.duration_string}` : item.error}</p>
-                    </div>
-                    {item.success && (
-                      <span className="text-[9px] text-emerald-400/60 ml-2 shrink-0">可下载</span>
-                    )}
+          {batchResults && batchResults.length > 0 && (
+            <div className="mt-8 fade-up">
+              <div className="card">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-white/50">
+                    批量解析结果 ({batchResults.filter(r => r.success).length}/{batchResults.length} 成功)
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={async () => {
+                        const token = localStorage.getItem('snapvid_token') || '';
+                        const urls = batchResults.filter(r => r.success).map(r => r.url);
+                        if (urls.length === 0) return;
+                        try {
+                          await fetch(`/api/batch-download`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ urls, audio_only: false, format_id: 'best' }),
+                          });
+                          window.location.hash = '#/dashboard';
+                        } catch (e) {}
+                      }}
+                      className="text-xs text-white font-medium bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-lg transition-all border border-white/10"
+                    >
+                      全部下载
+                    </button>
+                    <button
+                      onClick={() => setBatchResults(null)}
+                      className="text-xs text-white/30 hover:text-white/60 transition-colors"
+                    >
+                      清除
+                    </button>
                   </div>
                 </div>
-              ))}
+
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {batchResults.map((item, i) => (
+                    <div key={i} className={`px-4 py-3 rounded-xl border ${item.success ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-red-500/[0.05] border-red-500/[0.1]'}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-white/60 truncate">{item.success ? item.title : item.url}</p>
+                          <p className="text-xs text-white/25 mt-0.5">{item.success ? `${item.platform} · ${item.duration_string}` : item.error}</p>
+                        </div>
+                        {item.success && (
+                          <button
+                            onClick={async () => {
+                              const token = localStorage.getItem('snapvid_token') || '';
+                              try {
+                                await fetch(`/api/download?token=${token}`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ url: item.url, format_id: 'best' }),
+                                });
+                                window.location.hash = '#/dashboard';
+                              } catch (e) {}
+                            }}
+                            className="text-xs text-cyan-400/70 hover:text-cyan-300 ml-3 px-3 py-1.5 rounded-lg hover:bg-cyan-500/10 transition-colors shrink-0"
+                          >
+                            下载
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
