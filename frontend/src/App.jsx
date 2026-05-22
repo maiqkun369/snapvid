@@ -143,6 +143,8 @@ function App() {
 
       const data = await response.json();
       setCurrentTask({ id: data.task_id, ...options });
+      // Clear video info after download starts (it's now in task center)
+      setVideoInfo(null);
       // Auto-navigate to dashboard after submitting download
       window.location.hash = '#/dashboard';
     } catch (err) {
