@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 320px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0b; color: #fff; }
+    h2 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #e0e0e0; }
+    .desc { font-size: 11px; color: #666; margin-bottom: 16px; line-height: 1.5; }
+    .platform-list { display: flex; flex-direction: column; gap: 6px; }
+    .platform-btn { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .platform-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+    .platform-btn .name { font-size: 13px; color: #ccc; }
+    .platform-btn .status { font-size: 11px; color: #666; }
+    .platform-btn.success { border-color: rgba(52,211,153,0.3); }
+    .platform-btn.success .status { color: #34d399; }
+    .platform-btn.error .status { color: #f87171; }
+    .sync-all { width: 100%; margin-top: 12px; padding: 10px; background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; color: #67e8f9; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .sync-all:hover { background: rgba(6,182,212,0.25); }
+    .tip { font-size: 10px; color: #444; margin-top: 12px; line-height: 1.5; text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>SnapVid Cookie Helper</h2>
+  <p class="desc">点击平台名称，一键同步该平台 Cookies 到 SnapVid</p>
+  
+  <div class="platform-list" id="platforms"></div>
+  
+  <button class="sync-all" id="syncAll">🔄 一键同步全部平台</button>
+  
+  <p class="tip">确保你已经在浏览器中登录过对应平台</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>

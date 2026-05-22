@@ -96,68 +96,68 @@ function CookieManager() {
       {showUpload && (
         <div className="space-y-4 pt-4 border-t border-white/[0.04]">
 
-          {/* Method 0: One-line terminal command — the EASIEST */}
-          <div className="rounded-xl bg-emerald-500/[0.06] border border-emerald-500/[0.15] p-5">
-            <p className="text-sm text-emerald-300/90 font-medium mb-3">最简方式：终端一行命令</p>
-            <p className="text-xs text-white/40 mb-3">
-              在你的电脑上打开终端（Terminal），粘贴运行以下命令，即可自动从 Chrome 提取 Cookies 并上传：
+          {/* Primary: Browser Extension — Best UX */}
+          <div className="rounded-xl bg-cyan-500/[0.06] border border-cyan-500/[0.15] p-5">
+            <p className="text-sm text-cyan-300/90 font-medium mb-2">推荐方式：浏览器扩展一键同步</p>
+            <p className="text-xs text-white/40 mb-4 leading-relaxed">
+              安装 SnapVid 专属扩展后，只需在浏览器中登录目标平台，点击扩展即可一键同步 Cookies。支持所有平台，含 httpOnly cookies。
             </p>
-            <div className="relative">
-              <pre className="bg-black/40 rounded-lg p-3 text-[11px] text-green-300/80 font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap break-all">
-{`yt-dlp --cookies-from-browser chrome --cookies /tmp/cookies.txt --skip-download "https://www.douyin.com/" 2>/dev/null; curl -X POST http://localhost:9090/api/cookies -H "Content-Type: application/json" -d "{\\"platform\\":\\"${platform}\\",\\"cookies_text\\":\\"$(cat /tmp/cookies.txt | sed 's/"/\\\\"/g' | tr '\\n' '\\\\n')\\"}" && echo " ✅ Done!"`}
-              </pre>
-              <button
-                onClick={() => {
-                  const cmd = `yt-dlp --cookies-from-browser chrome --cookies /tmp/cookies.txt --skip-download "https://www.douyin.com/" 2>/dev/null; curl -X POST http://localhost:9090/api/cookies -H "Content-Type: application/json" -d '{"platform":"${platform}","cookies_text":"'$(cat /tmp/cookies.txt | base64)'"}'`;
-                  navigator.clipboard.writeText(
-                    `yt-dlp --cookies-from-browser chrome --cookies /tmp/cookies.txt --skip-download "https://www.douyin.com/" 2>/dev/null && curl -s -X POST http://localhost:9090/api/cookies -H "Content-Type: application/json" -d "$(python3 -c "import json; print(json.dumps({'platform':'${platform}','cookies_text':open('/tmp/cookies.txt').read()}))")" && echo "✅ Cookies uploaded!"`
-                  );
-                  setMessage('命令已复制到剪贴板！');
-                }}
-                className="absolute top-2 right-2 text-[10px] bg-white/10 hover:bg-white/20 text-white/50 px-2 py-1 rounded transition-colors"
-              >
-                复制
-              </button>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold">1</span>
+                <span className="text-xs text-white/50">安装扩展：Chrome → 设置 → 扩展 → 开发者模式 → 加载已解压扩展 → 选择 <code className="text-cyan-300/60">extension/</code> 文件夹</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold">2</span>
+                <span className="text-xs text-white/50">在浏览器中打开目标平台并登录（如果已经登录过则跳过）</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold">3</span>
+                <span className="text-xs text-white/50">点击扩展图标 → 点击对应平台 → 自动同步完成 ✅</span>
+              </div>
             </div>
-            <p className="text-[11px] text-white/25 mt-2">
-              要求：电脑已安装 yt-dlp（<code className="text-white/40">pip install yt-dlp</code>）且 Chrome 浏览器曾访问过抖音
-            </p>
 
-            {/* Auto-extract button (for non-Docker setups) */}
+            {/* Quick login links */}
+            <div className="mt-4 pt-3 border-t border-cyan-500/[0.1]">
+              <p className="text-xs text-white/30 mb-2">快捷登录（点击后在新窗口登录，然后用扩展同步）：</p>
+              <div className="flex flex-wrap gap-2">
+                {platforms.map(p => (
+                  <a key={p.id} href={
+                    p.id === 'douyin' ? 'https://www.douyin.com' :
+                    p.id === 'youtube' ? 'https://accounts.google.com/ServiceLogin?service=youtube' :
+                    p.id === 'bilibili_vip' ? 'https://passport.bilibili.com/login' :
+                    p.id === 'youku' ? 'https://www.youku.com' :
+                    p.id === 'tencent' ? 'https://v.qq.com' :
+                    p.id === 'iqiyi' ? 'https://www.iqiyi.com' :
+                    'https://www.mgtv.com'
+                  } target="_blank" rel="noopener"
+                    className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs text-white/50
+                      hover:bg-white/[0.08] hover:text-white/70 transition-all"
+                  >
+                    {p.name} →
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Alternative: Manual paste */}
+          <div>
             <button
-              onClick={async () => {
-                setMessage('正在尝试自动提取...');
-                try {
-                  const res = await fetch(`/api/cookies/auto-extract?platform=${platform}`, { method: 'POST' });
-                  const data = await res.json();
-                  setMessage(data.message);
-                  if (data.success) fetchStatus();
-                } catch (e) { setMessage('提取失败'); }
-              }}
-              className="mt-3 px-4 py-2 bg-emerald-500/20 border border-emerald-400/30 rounded-lg
-                text-xs text-emerald-300 font-medium transition-all hover:bg-emerald-500/30"
+              onClick={() => setShowGuide(!showGuide)}
+              className="text-xs text-white/30 hover:text-white/50 transition-colors flex items-center gap-1"
             >
-              🔄 尝试自动提取（服务器端）
+              <svg className={`w-3 h-3 transition-transform ${showGuide ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              其他方式：手动粘贴 Cookies
             </button>
+            {showGuide && (
+              <div className="mt-3 space-y-3 pl-4 border-l border-white/[0.06]">
+                <p className="text-xs text-white/25">使用 Chrome 扩展 「Get cookies.txt LOCALLY」导出后粘贴到下方</p>
+              </div>
+            )}
           </div>
-
-          {/* Method 1: Bookmarklet */}
-          <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] p-4">
-            <p className="text-xs text-white/50 font-medium mb-2">备选方法：书签脚本</p>
-            <p className="text-[11px] text-white/25 mb-2">（注意：此方法对抖音可能无效，因为拿不到 httpOnly cookies）</p>
-            <a
-              href={bookmarkletCode}
-              onClick={(e) => e.preventDefault()}
-              draggable="true"
-              className="inline-block px-3 py-1.5 bg-white/[0.06] border border-white/[0.1] rounded-lg
-                text-[11px] text-white/40 cursor-grab active:cursor-grabbing
-                hover:bg-white/[0.1] transition-colors"
-            >
-              ↗ 导出Cookies（拖到书签栏）
-            </a>
-          </div>
-
-          {/* Platform + paste area */}
           <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="input-field text-sm">
             {platforms.map((p) => (
               <option key={p.id} value={p.id}>{p.name} - {p.hint}</option>

@@ -581,6 +581,27 @@ class DownloaderService:
                 "status": "completed",
             })
         except Exception as e:
+            # Try Douyin fallback download if yt-dlp fails
+            if "douyin.com" in request.url:
+                try:
+                    fallback_file = await loop.run_in_executor(
+                        None, self._douyin_fallback_download, request.url, task_id
+                    )
+                    if fallback_file:
+                        task.status = DownloadStatus.COMPLETED
+                        task.progress = 100.0
+                        task.filename = Path(fallback_file).name
+                        try:
+                            task.filesize = Path(fallback_file).stat().st_size
+                        except OSError:
+                            pass
+                        await self._send_progress(task_id, {
+                            "progress": 100.0, "speed": "", "eta": "00:00", "status": "completed",
+                        })
+                        return
+                except Exception as fe:
+                    logger.error(f"Douyin fallback download also failed: {fe}")
+
             logger.error(f"Download failed for task {task_id}: {e}")
             task.status = DownloadStatus.FAILED
             task.error = str(e)
@@ -833,6 +854,60 @@ class DownloaderService:
         except Exception as e:
             logger.error(f"Douyin fallback failed: {e}")
             return None
+
+    def _douyin_fallback_download(self, url: str, task_id: str) -> Optional[str]:
+        """Download Douyin video using fallback method (direct URL download)."""
+        import requests as req
+        from services.douyin_fallback import extract_douyin_info
+
+        # Extract video ID
+        video_id = None
+        id_match = re.search(r'/video/(\d+)', url)
+        if id_match:
+            video_id = id_match.group(1)
+        else:
+            modal_match = re.search(r'modal_id=(\d+)', url)
+            if modal_match:
+                video_id = modal_match.group(1)
+
+        if not video_id:
+            raise RuntimeError("无法提取抖音视频ID")
+
+        info = extract_douyin_info(video_id)
+        if not info or not info.get("video_url"):
+            raise RuntimeError("无法获取抖音视频下载地址")
+
+        video_url = info["video_url"]
+        title = info.get("title", "douyin_video")[:50].replace("/", "_").replace("\\", "_")
+
+        # Download the video
+        headers = {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15",
+            "Referer": "https://www.douyin.com/",
+        }
+
+        resp = req.get(video_url, headers=headers, stream=True, timeout=60)
+        if resp.status_code != 200:
+            raise RuntimeError(f"视频下载失败: HTTP {resp.status_code}")
+
+        output_path = DOWNLOADS_DIR / f"{task_id}_{title}.mp4"
+        total = int(resp.headers.get("content-length", 0))
+        downloaded = 0
+
+        task = self._tasks.get(task_id)
+
+        with open(output_path, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=1024 * 1024):  # 1MB chunks
+                f.write(chunk)
+                downloaded += len(chunk)
+                if task and total > 0:
+                    task.progress = (downloaded / total) * 100
+                    task.speed = f"{downloaded / (1024*1024):.1f}MB / {total / (1024*1024):.1f}MB"
+
+        if task:
+            task.title = title
+
+        return str(output_path)
 
     def get_task(self, task_id: str) -> Optional[DownloadTask]:
         return self._tasks.get(task_id)

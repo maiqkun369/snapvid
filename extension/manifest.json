@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "SnapVid Cookie Helper",
+  "version": "1.0.0",
+  "description": "一键将平台 Cookies 同步到 SnapVid，支持抖音/YouTube/B站等",
+  "permissions": ["cookies", "activeTab"],
+  "host_permissions": [
+    "*://*.douyin.com/*",
+    "*://*.youtube.com/*",
+    "*://*.bilibili.com/*",
+    "*://*.youku.com/*",
+    "*://*.v.qq.com/*",
+    "*://*.iqiyi.com/*",
+    "*://*.mgtv.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
