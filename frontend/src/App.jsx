@@ -48,6 +48,14 @@ function App() {
   const [refreshHistory, setRefreshHistory] = useState(0);
 
   const handleParse = useCallback(async (url) => {
+    // Must be logged in to parse
+    const token = localStorage.getItem('snapvid_token') || '';
+    if (!token) {
+      setError('请先登录后再使用');
+      setShowAuth(true);
+      return;
+    }
+
     setLoading(true);
     setError('');
     setVideoInfo(null);
