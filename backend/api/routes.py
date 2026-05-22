@@ -87,14 +87,48 @@ async def start_download(request: DownloadRequest, token: str = "") -> DownloadR
 
 
 @router.get("/downloads", response_model=list[DownloadTask])
-async def get_download_history(token: str = "") -> list[DownloadTask]:
-    """Get download tasks for current user."""
+async def get_download_history(token: str = "", page: int = 1, limit: int = 50) -> list[DownloadTask]:
+    """Get download tasks for current user with pagination."""
     owner = "anonymous"
     if token:
         payload = auth_service._verify_token(token)
         if payload:
             owner = payload.get("phone", "anonymous")
-    return downloader_service.get_tasks_by_owner(owner)
+    tasks = downloader_service.get_tasks_by_owner(owner)
+    start = (page - 1) * limit
+    return tasks[start:start + limit]
+
+
+@router.get("/tasks/active", response_model=list[DownloadTask])
+async def get_active_tasks(token: str = "") -> list[DownloadTask]:
+    """Get currently active (downloading/pending) tasks for current user."""
+    owner = "anonymous"
+    if token:
+        payload = auth_service._verify_token(token)
+        if payload:
+            owner = payload.get("phone", "anonymous")
+    return downloader_service.get_active_tasks(owner)
+
+
+@router.post("/tasks/{task_id}/cancel")
+async def cancel_task(task_id: str) -> dict[str, str]:
+    """Cancel a running download task."""
+    success = downloader_service.cancel_task(task_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="任务不存在或已完成")
+    return {"message": "已取消"}
+
+
+@router.get("/user/stats")
+async def get_user_stats(token: str = "") -> dict:
+    """Get user statistics: downloads today, plan info, etc."""
+    if not token:
+        return {"plan": "none", "downloads_today": 0, "downloads_total": 0}
+    payload = auth_service._verify_token(token)
+    if not payload:
+        return {"plan": "none", "downloads_today": 0, "downloads_total": 0}
+    phone = payload["phone"]
+    return auth_service.get_user_stats(phone)
 
 
 @router.get("/downloads/{task_id}/file")

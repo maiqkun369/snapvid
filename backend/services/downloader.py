@@ -849,6 +849,26 @@ class DownloaderService:
         tasks.sort(key=lambda t: t.created_at, reverse=True)
         return tasks
 
+    def get_active_tasks(self, owner: str) -> list[DownloadTask]:
+        """Get active (downloading/pending) tasks for an owner."""
+        tasks = [
+            t for t in self._tasks.values()
+            if t.owner == owner and t.status in (DownloadStatus.DOWNLOADING, DownloadStatus.PENDING)
+        ]
+        tasks.sort(key=lambda t: t.created_at, reverse=True)
+        return tasks
+
+    def cancel_task(self, task_id: str) -> bool:
+        """Cancel a running download task."""
+        task = self._tasks.get(task_id)
+        if not task:
+            return False
+        if task.status in (DownloadStatus.COMPLETED, DownloadStatus.FAILED):
+            return False
+        task.status = DownloadStatus.FAILED
+        task.error = "已取消"
+        return True
+
     def get_comments(self, task_id: str) -> list:
         """Get exported comments for a task."""
         return self._comments.get(task_id, [])

@@ -317,6 +317,37 @@ class AuthService:
         used = row["count"] if row else 0
         return max(0, limit - used)
 
+    def get_user_stats(self, phone: str) -> dict:
+        """Get user stats: plan, downloads today/total, member info."""
+        db = _get_db()
+        user = db.execute("SELECT plan, created_at FROM users WHERE phone = ?", (phone,)).fetchone()
+        plan = user["plan"] if user else "free"
+
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today_row = db.execute(
+            "SELECT count FROM download_log WHERE phone = ? AND date = ?", (phone, today)
+        ).fetchone()
+        downloads_today = today_row["count"] if today_row else 0
+
+        total_row = db.execute(
+            "SELECT SUM(count) as total FROM download_log WHERE phone = ?", (phone,)
+        ).fetchone()
+        downloads_total = total_row["total"] if total_row and total_row["total"] else 0
+
+        db.close()
+
+        remaining = self._get_daily_remaining(phone, plan)
+        return {
+            "plan": plan,
+            "phone": self._mask_phone(phone),
+            "downloads_today": downloads_today,
+            "downloads_total": downloads_total,
+            "daily_remaining": remaining,
+            "daily_limit": PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])["daily_downloads"],
+            "max_resolution": PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])["max_resolution"],
+            "member_since": user["created_at"] if user else "",
+        }
+
     def _generate_token(self, phone: str, plan: str) -> str:
         """Generate JWT token."""
         payload = {

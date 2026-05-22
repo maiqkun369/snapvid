@@ -5,7 +5,7 @@ import UrlInput from './components/UrlInput.jsx';
 import VideoInfo from './components/VideoInfo.jsx';
 import DownloadOptions from './components/DownloadOptions.jsx';
 import ProgressBar from './components/ProgressBar.jsx';
-import TabPanel from './components/TabPanel.jsx';
+import Dashboard from './components/Dashboard.jsx';
 
 // Clean error messages to never expose technical details to users
 function friendlyError(msg) {
@@ -30,6 +30,15 @@ function friendlyError(msg) {
 function App() {
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
+  // Simple hash router
+  const [route, setRoute] = useState(window.location.hash === '#/dashboard' ? 'dashboard' : 'home');
+
+  useEffect(() => {
+    const handleHash = () => setRoute(window.location.hash === '#/dashboard' ? 'dashboard' : 'home');
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
   // Restore state from localStorage on mount
   const [videoInfo, setVideoInfo] = useState(() => {
     try { return JSON.parse(localStorage.getItem('snapvid_videoInfo')); } catch { return null; }
@@ -134,6 +143,8 @@ function App() {
 
       const data = await response.json();
       setCurrentTask({ id: data.task_id, ...options });
+      // Auto-navigate to dashboard after submitting download
+      window.location.hash = '#/dashboard';
     } catch (err) {
       setError(friendlyError(err.message));
     }
@@ -168,11 +179,21 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#0a0a0b] text-white">
+    <>
       {/* Agreement Modal */}
       <Agreement />
       {/* Auth Modal */}
       <AuthModal show={showAuth} onClose={() => setShowAuth(false)} onLogin={handleLogin} />
+
+      {/* Route: Dashboard */}
+      {route === 'dashboard' && user ? (
+        <Dashboard
+          user={user}
+          onLogout={handleLogout}
+          onNewDownload={() => { window.location.hash = '#/'; }}
+        />
+      ) : (
+    <div className="min-h-screen relative overflow-hidden bg-[#0a0a0b] text-white">
 
       {/* Aurora Background */}
       <div className="animated-bg" />
@@ -286,10 +307,14 @@ function App() {
             </div>
           )}
 
-          {/* Tabs: AI Tools / Cloud / History / Pricing / Platforms / Cookies */}
-          <div className="mt-12">
-            <TabPanel currentTask={currentTask} refreshHistory={refreshHistory} />
-          </div>
+          {/* Go to Dashboard link */}
+          {user && (
+            <div className="mt-8 text-center">
+              <a href="#/dashboard" className="text-sm text-cyan-400/60 hover:text-cyan-300 transition-colors">
+                进入控制台 →
+              </a>
+            </div>
+          )}
 
         </div>
       </main>
@@ -307,6 +332,8 @@ function App() {
         </div>
       </footer>
     </div>
+      )}
+    </>
   );
 }
 
