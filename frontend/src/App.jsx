@@ -86,6 +86,14 @@ function App() {
   }, []);
 
   const handleBatchParse = useCallback(async (urls) => {
+    // Must be logged in
+    const token = localStorage.getItem('snapvid_token') || '';
+    if (!token) {
+      setError('请先登录后再使用');
+      setShowAuth(true);
+      return;
+    }
+
     setLoading(true);
     setError('');
     setVideoInfo(null);
