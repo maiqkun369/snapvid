@@ -265,7 +265,7 @@ class AuthService:
         }
 
     def record_download(self, token: Optional[str]) -> None:
-        """Record a download for the user."""
+        """Record a download for the user (all users, for stats)."""
         if not token:
             return
 
@@ -274,10 +274,6 @@ class AuthService:
             return
 
         phone = payload["phone"]
-        plan = payload.get("plan", "free")
-
-        if plan == "pro":
-            return  # Pro users don't need counting
 
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         db = _get_db()
