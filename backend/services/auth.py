@@ -217,23 +217,25 @@ class AuthService:
     def check_download_permission(self, token: Optional[str]) -> dict:
         """Check if user can download. Returns limits info."""
         if not token:
-            # Anonymous user - most restricted
+            # Anonymous user - must login to download
             return {
-                "allowed": True,
-                "plan": "free",
-                "daily_remaining": 3,
+                "allowed": False,
+                "plan": "none",
+                "daily_remaining": 0,
                 "max_resolution": "1080p",
                 "batch_enabled": False,
+                "message": "请先登录后再下载",
             }
 
         payload = self._verify_token(token)
         if not payload:
             return {
-                "allowed": True,
-                "plan": "free",
-                "daily_remaining": 3,
+                "allowed": False,
+                "plan": "none",
+                "daily_remaining": 0,
                 "max_resolution": "1080p",
                 "batch_enabled": False,
+                "message": "登录已过期，请重新登录",
             }
 
         phone = payload["phone"]

@@ -75,8 +75,16 @@ function App() {
 
   const handleDownload = useCallback(async (options) => {
     setError('');
+    const token = localStorage.getItem('snapvid_token') || '';
+
+    // Check login status
+    if (!token) {
+      setError('请先登录后再下载');
+      setShowAuth(true);
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('snapvid_token') || '';
       const response = await fetch(`/api/download?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
