@@ -267,8 +267,15 @@ async def batch_get_info(request: BatchInfoRequest) -> list[BatchInfoItem]:
 
 
 @router.post("/batch-download")
-async def batch_download(request: BatchDownloadRequest) -> list[DownloadResponse]:
+async def batch_download(request: BatchDownloadRequest, token: str = "") -> list[DownloadResponse]:
     """Batch start downloads for multiple URLs (max 10)."""
+    # Determine owner from token
+    owner = "anonymous"
+    if token:
+        payload = auth_service._verify_token(token)
+        if payload:
+            owner = payload.get("phone", "anonymous")
+
     urls = request.urls[:10]
     results = []
     for url in urls:
@@ -278,7 +285,7 @@ async def batch_download(request: BatchDownloadRequest) -> list[DownloadResponse
                 audio_only=request.audio_only,
                 format_id=request.format_id,
             )
-            task_id = await downloader_service.start_download(dl_request)
+            task_id = await downloader_service.start_download(dl_request, owner=owner)
             results.append(DownloadResponse(task_id=task_id, message="已创建"))
         except Exception as e:
             results.append(DownloadResponse(task_id="", message=str(e)))

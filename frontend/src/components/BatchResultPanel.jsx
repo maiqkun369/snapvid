@@ -38,7 +38,7 @@ function BatchResultPanel({ results, onClear }) {
     setDownloadStatus(prev => ({ ...prev, ...newStatus }));
 
     try {
-      const res = await fetch('/api/batch-download', {
+      const res = await fetch(`/api/batch-download?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ urls, audio_only: false, format_id: 'best' }),
