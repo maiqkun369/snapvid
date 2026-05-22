@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -210,9 +211,22 @@ class DownloaderService:
             ydl_opts["cookiefile"] = cookie_file
 
         loop = asyncio.get_event_loop()
-        info = await loop.run_in_executor(None, self._extract_info, url, ydl_opts)
+        try:
+            info = await loop.run_in_executor(None, self._extract_info, url, ydl_opts)
+        except ValueError as e:
+            # If Douyin fails, try fallback parser
+            if "douyin.com" in url:
+                fallback_info = await self._try_douyin_fallback(url)
+                if fallback_info:
+                    return fallback_info
+            raise  # Re-raise if no fallback or fallback failed
 
         if info is None:
+            # Try Douyin fallback before giving up
+            if "douyin.com" in url:
+                fallback_info = await self._try_douyin_fallback(url)
+                if fallback_info:
+                    return fallback_info
             raise ValueError("无法获取视频信息，请检查URL是否正确")
 
         # Detect if auth is required
@@ -766,6 +780,59 @@ class DownloaderService:
     def get_comments(self, task_id: str) -> list:
         """Get exported comments for a task."""
         return self._comments.get(task_id, [])
+
+    async def _try_douyin_fallback(self, url: str) -> Optional[VideoInfoResponse]:
+        """Try extracting Douyin video info using custom fallback parser."""
+        try:
+            from services.douyin_fallback import extract_douyin_info
+
+            # Extract video ID from URL
+            video_id = None
+            id_match = re.search(r'/video/(\d+)', url)
+            if id_match:
+                video_id = id_match.group(1)
+            else:
+                modal_match = re.search(r'modal_id=(\d+)', url)
+                if modal_match:
+                    video_id = modal_match.group(1)
+
+            if not video_id:
+                return None
+
+            loop = asyncio.get_event_loop()
+            info = await loop.run_in_executor(None, extract_douyin_info, video_id)
+
+            if not info:
+                return None
+
+            # Convert to VideoInfoResponse
+            duration = info.get("duration", 0)
+            mins = int(duration) // 60
+            secs = int(duration) % 60
+            duration_string = f"{mins:02d}:{secs:02d}"
+
+            return VideoInfoResponse(
+                title=info.get("title", "抖音视频"),
+                duration=duration,
+                duration_string=duration_string,
+                thumbnail=info.get("thumbnail", ""),
+                uploader=info.get("author", ""),
+                platform="Douyin",
+                description=info.get("title", ""),
+                formats=[VideoFormat(
+                    format_id="best",
+                    format_note="视频 (无水印)",
+                    ext="mp4",
+                    resolution="原始画质",
+                )],
+                subtitles=[],
+                chapters=None,
+                comment_count=None,
+                requires_auth=False,
+            )
+        except Exception as e:
+            logger.error(f"Douyin fallback failed: {e}")
+            return None
 
     def get_task(self, task_id: str) -> Optional[DownloadTask]:
         return self._tasks.get(task_id)

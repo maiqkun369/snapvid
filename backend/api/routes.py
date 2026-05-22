@@ -174,6 +174,41 @@ async def delete_cookies(platform: str) -> dict[str, str]:
     return {"message": f"{platform} cookies 已删除"}
 
 
+@router.post("/cookies/auto-extract")
+async def auto_extract_cookies(platform: str = "douyin") -> dict:
+    """Auto-extract cookies from the server-side browser (if available).
+    This uses yt-dlp's browser cookie extraction as fallback.
+    """
+    import subprocess
+    import tempfile
+
+    # Try using yt-dlp to extract cookies from available browsers
+    browsers = ["chrome", "chromium", "firefox", "edge", "safari"]
+    for browser in browsers:
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+                tmp_path = f.name
+
+            result = subprocess.run(
+                ["yt-dlp", "--cookies-from-browser", browser, "--cookies", tmp_path,
+                 "--skip-download", "--print", "title", "https://www.douyin.com/"],
+                capture_output=True, text=True, timeout=15
+            )
+
+            from pathlib import Path
+            tmp = Path(tmp_path)
+            if tmp.exists() and tmp.stat().st_size > 100:
+                cookies_text = tmp.read_text()
+                downloader_service.save_cookies(platform, cookies_text)
+                tmp.unlink(missing_ok=True)
+                return {"success": True, "browser": browser, "message": f"已从 {browser} 提取 Cookies"}
+            tmp.unlink(missing_ok=True)
+        except Exception:
+            continue
+
+    return {"success": False, "message": "无法自动提取 Cookies（Docker 容器内无浏览器）。请使用下方的终端命令方式。"}
+
+
 # === Batch Operations ===
 
 @router.post("/batch-info", response_model=list[BatchInfoItem])
