@@ -502,14 +502,15 @@ class DownloaderService:
         if request.playlist_random:
             ydl_opts["playlist_random"] = True
 
-        # Duration filter
+        # Duration filter (using match_filter_func)
         match_filters = []
         if request.filter_duration_min is not None:
             match_filters.append(f"duration >= {request.filter_duration_min}")
         if request.filter_duration_max is not None:
             match_filters.append(f"duration <= {request.filter_duration_max}")
         if match_filters:
-            ydl_opts["match_filter"] = " & ".join(match_filters)
+            filter_str = " & ".join(match_filters)
+            ydl_opts["match_filter"] = yt_dlp.utils.match_filter_func(filter_str)
 
         # File size filter
         if request.max_filesize:
