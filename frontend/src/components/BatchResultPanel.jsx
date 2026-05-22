@@ -4,7 +4,12 @@ function BatchResultPanel({ results, onClear }) {
   const [selected, setSelected] = useState(new Set(
     results.filter(r => r.success).map((_, i) => i)
   ));
-  const [downloadStatus, setDownloadStatus] = useState({}); // index -> 'pending'|'downloading'|'done'|'error'
+  const [downloadStatus, setDownloadStatus] = useState({});
+  const [showOptions, setShowOptions] = useState(false);
+  // Download options
+  const [audioOnly, setAudioOnly] = useState(false);
+  const [outputFormat, setOutputFormat] = useState('mp4');
+  const [formatSort, setFormatSort] = useState(''); // index -> 'pending'|'downloading'|'done'|'error'
 
   const successItems = results.filter(r => r.success);
   const allSelectedCount = [...selected].filter(i => results[i]?.success).length;
@@ -41,7 +46,13 @@ function BatchResultPanel({ results, onClear }) {
       const res = await fetch(`/api/batch-download?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ urls, audio_only: false, format_id: 'best' }),
+        body: JSON.stringify({
+          urls,
+          audio_only: audioOnly,
+          format_id: 'best',
+          output_format: outputFormat,
+          format_sort: formatSort || undefined,
+        }),
       });
       if (res.ok) {
         const doneStatus = {};
@@ -126,6 +137,58 @@ function BatchResultPanel({ results, onClear }) {
               ×
             </button>
           </div>
+        </div>
+
+        {/* Download Options (collapsible) */}
+        <div className="mb-4 pb-4 border-b border-white/[0.04]">
+          <button
+            onClick={() => setShowOptions(!showOptions)}
+            className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+          >
+            <svg className={`w-3 h-3 transition-transform ${showOptions ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            下载配置
+          </button>
+
+          {showOptions && (
+            <div className="mt-3 pl-5 space-y-3">
+              {/* Mode */}
+              <div className="flex items-center gap-2">
+                <button onClick={() => setAudioOnly(false)}
+                  className={`px-3 py-1.5 rounded-lg text-xs transition-all ${!audioOnly ? 'bg-white text-gray-900 font-medium' : 'bg-white/[0.05] text-white/50'}`}>
+                  视频
+                </button>
+                <button onClick={() => setAudioOnly(true)}
+                  className={`px-3 py-1.5 rounded-lg text-xs transition-all ${audioOnly ? 'bg-white text-gray-900 font-medium' : 'bg-white/[0.05] text-white/50'}`}>
+                  仅音频
+                </button>
+              </div>
+
+              {/* Format */}
+              {!audioOnly && (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-white/40 w-16">格式</span>
+                  <select value={outputFormat} onChange={(e) => setOutputFormat(e.target.value)} className="input-field text-xs py-1.5 flex-1">
+                    <option value="mp4">MP4</option>
+                    <option value="mkv">MKV</option>
+                    <option value="webm">WebM</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Quality preference */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-white/40 w-16">画质</span>
+                <select value={formatSort} onChange={(e) => setFormatSort(e.target.value)} className="input-field text-xs py-1.5 flex-1">
+                  <option value="">最佳画质</option>
+                  <option value="res:1080">1080P</option>
+                  <option value="res:720">720P (省流)</option>
+                  <option value="filesize">最小体积</option>
+                </select>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Select All */}
