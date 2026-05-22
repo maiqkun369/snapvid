@@ -184,15 +184,14 @@ function App() {
           <span className="text-base font-semibold text-white/80 tracking-wide">SnapVid</span>
           <div className="flex items-center gap-6">
             <a href="#disclaimer" className="text-sm text-white/50 hover:text-white/80 transition-colors">使用须知</a>
-            <a href="#pricing" className="text-sm text-white/50 hover:text-white/80 transition-colors">Pro</a>
             {user ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-white/60">
-                  {user.phone || (user.plan === 'pro' ? 'Pro会员' : '免费版')}
+                  {user.phone || '用户'}
                 </span>
-                <span className={`text-xs px-2 py-1 rounded-md font-medium ${user.plan === 'pro' ? 'bg-purple-500/20 text-purple-300' : 'bg-white/[0.08] text-white/50'}`}>
-                  {user.plan === 'pro' ? 'PRO' : 'FREE'}
-                </span>
+                {user.plan === 'pro' && (
+                  <span className="text-xs px-2 py-1 rounded-md font-medium bg-purple-500/20 text-purple-300">PRO</span>
+                )}
                 <button onClick={handleLogout} className="text-sm text-white/30 hover:text-white/60 transition-colors">
                   退出
                 </button>

@@ -140,7 +140,23 @@ function ProgressBar({ taskId, onComplete }) {
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm text-white/70">{getStatusLabel()}</span>
-        <span className="text-sm text-white/40">{progress.toFixed(1)}%</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-white/40">{progress.toFixed(1)}%</span>
+          {(status === 'downloading' || status === 'pending') && (
+            <button
+              onClick={async () => {
+                try {
+                  await fetch(`/api/downloads/${taskId}`, { method: 'DELETE' });
+                  if (onComplete) onComplete();
+                } catch (e) {}
+              }}
+              className="text-xs text-white/30 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-500/10"
+              title="取消下载"
+            >
+              取消
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="w-full bg-white/[0.06] rounded-full h-2 overflow-hidden">
