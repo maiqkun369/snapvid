@@ -41,6 +41,7 @@ class VideoInfoResponse(BaseModel):
     formats: list[VideoFormat] = Field(default_factory=list, description="Available formats")
     subtitles: list[str] = Field(default_factory=list, description="Available subtitle languages")
     chapters: Optional[list[dict]] = Field(default=None, description="Video chapters")
+    comment_count: Optional[int] = Field(default=None, description="Number of comments")
     requires_auth: bool = Field(default=False, description="Whether platform requires auth")
 
 
@@ -69,6 +70,21 @@ class DownloadRequest(BaseModel):
     output_template: Optional[str] = Field(default=None, description="Custom filename template")
     thumbnail_only: bool = Field(default=False, description="Download only thumbnail image")
     remux_format: Optional[str] = Field(default=None, description="Remux to format without re-encoding")
+    # Roadmap features
+    write_comments: bool = Field(default=False, description="Export video comments")
+    use_archive: bool = Field(default=True, description="Skip already downloaded videos")
+    safe_mode: bool = Field(default=False, description="Anti-ban mode with sleep between requests")
+    playlist_random: bool = Field(default=False, description="Randomize playlist order")
+    filter_duration_min: Optional[int] = Field(default=None, description="Min duration filter in seconds")
+    filter_duration_max: Optional[int] = Field(default=None, description="Max duration filter in seconds")
+    max_filesize: Optional[str] = Field(default=None, description="Max file size e.g. 500M")
+    min_filesize: Optional[str] = Field(default=None, description="Min file size e.g. 10M")
+    date_after: Optional[str] = Field(default=None, description="Only videos after date YYYYMMDD")
+    date_before: Optional[str] = Field(default=None, description="Only videos before date YYYYMMDD")
+    format_sort: Optional[str] = Field(default=None, description="Format sort e.g. res:1080,ext:mp4")
+    geo_bypass_country: Optional[str] = Field(default=None, description="Country code for geo bypass e.g. US")
+    convert_subs_format: Optional[str] = Field(default=None, description="Convert subtitles to: srt, ass, vtt")
+    convert_thumbnail_format: Optional[str] = Field(default=None, description="Convert thumbnail: png, jpg, webp")
 
 
 class DownloadStatus(str, Enum):

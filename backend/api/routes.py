@@ -140,6 +140,16 @@ async def delete_download(task_id: str) -> dict[str, str]:
     return {"message": "已删除"}
 
 
+@router.get("/comments/{task_id}")
+async def get_comments(task_id: str) -> dict:
+    """Get exported comments for a download task."""
+    task = downloader_service.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="下载任务不存在")
+    comments = downloader_service.get_comments(task_id)
+    return {"task_id": task_id, "count": len(comments), "comments": comments[:200]}
+
+
 # Cookie management endpoints
 @router.post("/cookies")
 async def upload_cookies(request: CookieUploadRequest) -> dict[str, str]:

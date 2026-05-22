@@ -123,6 +123,7 @@ class DownloaderService:
         self._tasks: dict[str, DownloadTask] = {}
         self._websockets: dict[str, WebSocket] = {}
         self._active_loops: dict[str, asyncio.AbstractEventLoop] = {}
+        self._comments: dict[str, list] = {}  # task_id -> comments list
 
     def get_downloads_dir(self) -> Path:
         return DOWNLOADS_DIR
@@ -275,6 +276,7 @@ class DownloaderService:
             formats=formats,
             subtitles=all_subs,
             chapters=chapters,
+            comment_count=info.get("comment_count"),
             requires_auth=requires_auth,
         )
 
@@ -478,6 +480,73 @@ class DownloaderService:
                 "preferedformat": request.remux_format,
             })
 
+        # === Roadmap Features ===
+
+        # Export comments
+        if request.write_comments:
+            ydl_opts["getcomments"] = True
+
+        # Download archive (skip already downloaded)
+        if request.use_archive:
+            archive_path = Path("/app/data/download_archive.txt")
+            archive_path.parent.mkdir(parents=True, exist_ok=True)
+            ydl_opts["download_archive"] = str(archive_path)
+
+        # Safe mode (anti-ban sleep)
+        if request.safe_mode:
+            ydl_opts["sleep_interval"] = 2
+            ydl_opts["max_sleep_interval"] = 5
+            ydl_opts["sleep_interval_requests"] = 1
+
+        # Playlist random order
+        if request.playlist_random:
+            ydl_opts["playlist_random"] = True
+
+        # Duration filter
+        match_filters = []
+        if request.filter_duration_min is not None:
+            match_filters.append(f"duration >= {request.filter_duration_min}")
+        if request.filter_duration_max is not None:
+            match_filters.append(f"duration <= {request.filter_duration_max}")
+        if match_filters:
+            ydl_opts["match_filter"] = " & ".join(match_filters)
+
+        # File size filter
+        if request.max_filesize:
+            ydl_opts["max_filesize"] = self._parse_filesize(request.max_filesize)
+        if request.min_filesize:
+            ydl_opts["min_filesize"] = self._parse_filesize(request.min_filesize)
+
+        # Date range filter
+        if request.date_after:
+            ydl_opts["dateafter"] = request.date_after
+        if request.date_before:
+            ydl_opts["datebefore"] = request.date_before
+
+        # Format sort (quality preference)
+        if request.format_sort:
+            ydl_opts["format_sort"] = request.format_sort.split(",")
+
+        # Geo bypass
+        if request.geo_bypass_country:
+            ydl_opts["geo_bypass"] = True
+            ydl_opts["geo_bypass_country"] = request.geo_bypass_country
+
+        # Subtitle format conversion
+        if request.convert_subs_format:
+            ydl_opts.setdefault("postprocessors", []).append({
+                "key": "FFmpegSubtitlesConvertor",
+                "format": request.convert_subs_format,
+            })
+
+        # Thumbnail format conversion
+        if request.convert_thumbnail_format:
+            ydl_opts["writethumbnail"] = True
+            ydl_opts.setdefault("postprocessors", []).append({
+                "key": "FFmpegThumbnailsConvertor",
+                "format": request.convert_thumbnail_format,
+            })
+
         try:
             downloaded_file = await loop.run_in_executor(
                 None, self._do_download, request.url, ydl_opts, task_id
@@ -519,6 +588,11 @@ class DownloaderService:
                     task = self._tasks.get(task_id)
                     if task:
                         task.title = info.get("title", "未知标题")
+
+                    # Save comments if extracted
+                    comments = info.get("comments", [])
+                    if comments:
+                        self._comments[task_id] = comments
 
                     filename = ydl.prepare_filename(info)
                     # Handle audio postprocessing extension change
@@ -663,6 +737,20 @@ class DownloaderService:
             return int(parts[0]) * 60 + float(parts[1])
         return float(time_str)
 
+    @staticmethod
+    def _parse_filesize(size_str: str) -> int:
+        """Parse file size string like '500M' or '1G' to bytes."""
+        size_str = size_str.strip().upper()
+        multipliers = {"K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4}
+        for suffix, mult in multipliers.items():
+            if size_str.endswith(suffix):
+                return int(float(size_str[:-1]) * mult)
+        # Try plain number (bytes)
+        try:
+            return int(size_str)
+        except ValueError:
+            return 0
+
     def get_all_tasks(self) -> list[DownloadTask]:
         tasks = list(self._tasks.values())
         tasks.sort(key=lambda t: t.created_at, reverse=True)
@@ -673,6 +761,10 @@ class DownloaderService:
         tasks = [t for t in self._tasks.values() if t.owner == owner]
         tasks.sort(key=lambda t: t.created_at, reverse=True)
         return tasks
+
+    def get_comments(self, task_id: str) -> list:
+        """Get exported comments for a task."""
+        return self._comments.get(task_id, [])
 
     def get_task(self, task_id: str) -> Optional[DownloadTask]:
         return self._tasks.get(task_id)
