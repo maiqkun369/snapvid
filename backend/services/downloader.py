@@ -202,6 +202,11 @@ class DownloaderService:
             "socket_timeout": 15,
         }
 
+        # Auto-apply system proxy if set (for YouTube/Twitter etc)
+        system_proxy = os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or os.environ.get("ALL_PROXY")
+        if system_proxy and ("youtube.com" in url or "youtu.be" in url or "twitter.com" in url or "x.com" in url):
+            ydl_opts["proxy"] = system_proxy
+
         # Note: impersonate requires curl_cffi with specific version compatibility
         # Currently disabled - rely on cookies + headers instead
 
@@ -219,12 +224,28 @@ class DownloaderService:
                 fallback_info = await self._try_douyin_fallback(url)
                 if fallback_info:
                     return fallback_info
+            # If YouTube fails, try fallback
+            if "youtube.com" in url or "youtu.be" in url:
+                fallback_info = await self._try_youtube_fallback(url)
+                if fallback_info:
+                    return fallback_info
+                # YouTube is blocked in China - give clear user-facing message
+                raise ValueError(
+                    "YouTube 视频暂时无法解析。可能原因：\n"
+                    "1. 当前网络环境无法访问 YouTube（需要配置代理）\n"
+                    "2. 视频已被删除或设为私密\n\n"
+                    "解决方案：在「高级选项 → 代理」中填入可访问 YouTube 的代理地址"
+                )
             raise  # Re-raise if no fallback or fallback failed
 
         if info is None:
-            # Try Douyin fallback before giving up
+            # Try platform fallbacks before giving up
             if "douyin.com" in url:
                 fallback_info = await self._try_douyin_fallback(url)
+                if fallback_info:
+                    return fallback_info
+            if "youtube.com" in url or "youtu.be" in url:
+                fallback_info = await self._try_youtube_fallback(url)
                 if fallback_info:
                     return fallback_info
             raise ValueError("无法获取视频信息，请检查URL是否正确")
@@ -303,19 +324,18 @@ class DownloaderService:
             err_msg = str(e)
             if "Sign in to confirm" in err_msg or "bot" in err_msg:
                 raise ValueError(
-                    "该平台要求登录验证。请在「账号管理」中导入对应平台的 Cookies 后重试。"
+                    "该平台要求验证身份，正在尝试备用通道..."
                 )
             elif "Fresh cookies" in err_msg or "cookies" in err_msg.lower():
                 raise ValueError(
-                    "抖音需要包含 ttwid/msToken 的完整 Cookies（需通过浏览器扩展「Get cookies.txt LOCALLY」导出，"
-                    "不能用书签脚本方式）。请使用方法二：安装 Chrome 扩展后，在抖音网页上导出完整 Cookies。"
+                    "该平台需要额外验证，正在尝试备用通道..."
                 )
             elif "Video unavailable" in err_msg:
                 raise ValueError("视频不可用：可能是地区限制、需要会员或视频已被删除")
             elif "HTTP Error 403" in err_msg:
-                raise ValueError("访问被拒绝 (403)：请导入该平台的 Cookies 或稍后重试")
+                raise ValueError("访问被拒绝，正在尝试备用通道...")
             elif "Unsupported URL" in err_msg:
-                raise ValueError("不支持的链接格式，请复制视频的完整分享链接（而非页面URL）")
+                raise ValueError("不支持的链接格式，请复制视频的完整分享链接")
             raise ValueError(f"视频解析失败: {err_msg}")
         except Exception as e:
             raise ValueError(f"视频解析出错: {str(e)}")
@@ -601,6 +621,27 @@ class DownloaderService:
                         return
                 except Exception as fe:
                     logger.error(f"Douyin fallback download also failed: {fe}")
+
+            # Try YouTube fallback download
+            if "youtube.com" in request.url or "youtu.be" in request.url:
+                try:
+                    fallback_file = await loop.run_in_executor(
+                        None, self._youtube_fallback_download, request.url, task_id
+                    )
+                    if fallback_file:
+                        task.status = DownloadStatus.COMPLETED
+                        task.progress = 100.0
+                        task.filename = Path(fallback_file).name
+                        try:
+                            task.filesize = Path(fallback_file).stat().st_size
+                        except OSError:
+                            pass
+                        await self._send_progress(task_id, {
+                            "progress": 100.0, "speed": "", "eta": "00:00", "status": "completed",
+                        })
+                        return
+                except Exception as fe:
+                    logger.error(f"YouTube fallback download also failed: {fe}")
 
             logger.error(f"Download failed for task {task_id}: {e}")
             task.status = DownloadStatus.FAILED
@@ -908,6 +949,75 @@ class DownloaderService:
             task.title = title
 
         return str(output_path)
+
+    async def _try_youtube_fallback(self, url: str) -> Optional[VideoInfoResponse]:
+        """Try getting YouTube video info via Invidious/Cobalt when yt-dlp fails."""
+        try:
+            from services.youtube_fallback import get_youtube_info_fallback, extract_youtube_video_id
+
+            loop = asyncio.get_event_loop()
+            info = await loop.run_in_executor(None, get_youtube_info_fallback, url)
+
+            if not info:
+                return None
+
+            duration = info.get("duration", 0)
+            hours = int(duration) // 3600
+            minutes = (int(duration) % 3600) // 60
+            seconds = int(duration) % 60
+            if hours > 0:
+                duration_string = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+            else:
+                duration_string = f"{minutes:02d}:{seconds:02d}"
+
+            return VideoInfoResponse(
+                title=info.get("title", "YouTube Video"),
+                duration=float(duration),
+                duration_string=duration_string,
+                thumbnail=info.get("thumbnail", ""),
+                uploader=info.get("author", ""),
+                platform="YouTube",
+                description=info.get("description", ""),
+                formats=[VideoFormat(
+                    format_id="best",
+                    format_note="最佳画质 (via fallback)",
+                    ext="mp4",
+                    resolution="up to 1080p",
+                )],
+                subtitles=[],
+                chapters=None,
+                comment_count=None,
+                requires_auth=False,
+            )
+        except Exception as e:
+            logger.error(f"YouTube fallback info failed: {e}")
+            return None
+
+    def _youtube_fallback_download(self, url: str, task_id: str) -> Optional[str]:
+        """Download YouTube video using Cobalt/Invidious fallback."""
+        from services.youtube_fallback import download_youtube_video
+
+        task = self._tasks.get(task_id)
+
+        def progress_cb(downloaded, total):
+            if task:
+                task.progress = (downloaded / total) * 100
+                task.speed = f"{downloaded / (1024*1024):.1f}MB / {total / (1024*1024):.1f}MB"
+
+        result = download_youtube_video(url, str(DOWNLOADS_DIR), progress_cb)
+
+        if result:
+            # Rename with task_id prefix for consistency
+            from pathlib import Path
+            old_path = Path(result)
+            new_name = f"{task_id}_{old_path.name}"
+            new_path = old_path.parent / new_name
+            old_path.rename(new_path)
+            if task:
+                task.title = old_path.stem
+            return str(new_path)
+
+        raise RuntimeError("YouTube fallback download failed: no available source")
 
     def get_task(self, task_id: str) -> Optional[DownloadTask]:
         return self._tasks.get(task_id)
