@@ -128,7 +128,16 @@ async def get_user_stats(token: str = "") -> dict:
     if not payload:
         return {"plan": "none", "downloads_today": 0, "downloads_total": 0}
     phone = payload["phone"]
-    return auth_service.get_user_stats(phone)
+    stats = auth_service.get_user_stats(phone)
+
+    # Override with real task counts from memory (more accurate)
+    all_tasks = downloader_service.get_tasks_by_owner(phone)
+    from datetime import datetime, timezone
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_count = sum(1 for t in all_tasks if t.created_at and t.created_at.startswith(today))
+    stats["downloads_today"] = today_count
+    stats["downloads_total"] = len(all_tasks)
+    return stats
 
 
 @router.get("/downloads/{task_id}/file")
