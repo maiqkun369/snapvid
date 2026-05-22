@@ -645,13 +645,26 @@ class DownloaderService:
 
             logger.error(f"Download failed for task {task_id}: {e}")
             task.status = DownloadStatus.FAILED
-            task.error = str(e)
+            # Clean error message for user display
+            raw_err = str(e)
+            if "Sign in" in raw_err or "bot" in raw_err or "cookies" in raw_err.lower():
+                task.error = "该平台当前网络无法访问，请配置代理后重试"
+            elif "Video unavailable" in raw_err:
+                task.error = "视频不可用，可能已被删除"
+            else:
+                # Strip yt-dlp internal prefixes
+                clean = raw_err.replace("下载失败: ", "").replace("下载出错: ", "")
+                import re as _re
+                clean = _re.sub(r'ERROR:\s*\[\w+\]\s*[\w-]+:\s*', '', clean)
+                clean = _re.sub(r'See\s+https://github\.com/.*$', '', clean)
+                clean = _re.sub(r'Use\s+--cookies.*$', '', clean)
+                task.error = clean.strip()[:150] or "下载失败，请稍后重试"
             await self._send_progress(task_id, {
                 "progress": task.progress,
                 "speed": "",
                 "eta": "",
                 "status": "failed",
-                "error": str(e),
+                "error": task.error,
             })
         finally:
             self._active_loops.pop(task_id, None)

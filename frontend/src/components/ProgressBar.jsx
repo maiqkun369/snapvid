@@ -1,5 +1,34 @@
 import React, { useEffect, useState, useRef } from 'react';
 
+// Clean technical error messages into user-friendly ones
+function cleanErrorMessage(error) {
+  if (!error) return '';
+  const msg = error.toString();
+  // YouTube/geo-blocked errors
+  if (msg.includes('Sign in to confirm') || msg.includes('bot'))
+    return '该视频所在平台当前网络无法直接访问，请在「高级选项」中配置代理后重试';
+  if (msg.includes('cookies') || msg.includes('Fresh cookies'))
+    return '该平台需要网络代理才能访问，请在「高级选项」中配置代理后重试';
+  if (msg.includes('Video unavailable'))
+    return '视频不可用：可能已被删除或设为私密';
+  if (msg.includes('HTTP Error 403') || msg.includes('Forbidden'))
+    return '访问被拒绝，请稍后重试或配置代理';
+  if (msg.includes('Unsupported URL'))
+    return '不支持的链接格式，请复制视频的完整分享链接';
+  if (msg.includes('网络') || msg.includes('timeout') || msg.includes('timed out'))
+    return '网络连接超时，请检查网络后重试';
+  if (msg.includes('no available source'))
+    return '暂时无法下载此视频，请稍后重试或配置代理';
+  // Strip yt-dlp technical prefixes
+  const cleaned = msg
+    .replace(/ERROR:\s*\[[\w-]+\]\s*[\w-]+:\s*/g, '')
+    .replace(/See\s+https:\/\/github\.com\/.*$/g, '')
+    .replace(/Use\s+--cookies.*$/g, '')
+    .replace(/下载失败:\s*/g, '')
+    .replace(/下载出错:\s*/g, '');
+  return cleaned.length > 100 ? cleaned.slice(0, 100) + '...' : cleaned;
+}
+
 function ProgressBar({ taskId, onComplete }) {
   const [status, setStatus] = useState('connecting');
   const [progress, setProgress] = useState(0);
@@ -128,7 +157,7 @@ function ProgressBar({ taskId, onComplete }) {
 
       {error && (
         <div className="text-xs text-red-300/80 bg-red-500/[0.08] border border-red-500/[0.12] rounded-lg px-3 py-2">
-          {error}
+          {cleanErrorMessage(error)}
         </div>
       )}
 

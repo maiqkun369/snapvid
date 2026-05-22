@@ -7,6 +7,26 @@ import DownloadOptions from './components/DownloadOptions.jsx';
 import ProgressBar from './components/ProgressBar.jsx';
 import TabPanel from './components/TabPanel.jsx';
 
+// Clean error messages to never expose technical details to users
+function friendlyError(msg) {
+  if (!msg) return '操作失败，请重试';
+  const s = msg.toString();
+  if (s.includes('Sign in') || s.includes('bot') || s.includes('cookies') || s.includes('Cookie'))
+    return '该平台当前网络无法直接访问，请在高级选项中配置代理后重试';
+  if (s.includes('Video unavailable'))
+    return '视频不可用，可能已被删除或设为私密';
+  if (s.includes('Unsupported URL'))
+    return '链接格式不支持，请复制视频的完整分享链接';
+  if (s.includes('版权') || s.includes('版权保护'))
+    return s; // Keep copyright messages as-is
+  if (s.includes('次数已用完'))
+    return s; // Keep quota messages
+  if (s.includes('请先登录'))
+    return s; // Keep login messages
+  // Strip yt-dlp internals
+  return s.replace(/ERROR:\s*\[\w+\]\s*\w+:\s*/g, '').replace(/See\s+https:\/\/.*$/g, '').trim() || '解析失败，请稍后重试';
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
@@ -40,7 +60,7 @@ function App() {
       data._url = url;
       setVideoInfo(data);
     } catch (err) {
-      setError(err.message || '解析视频信息失败，请检查URL是否正确');
+      setError(friendlyError(err.message));
     } finally {
       setLoading(false);
     }
@@ -99,7 +119,7 @@ function App() {
       const data = await response.json();
       setCurrentTask({ id: data.task_id, ...options });
     } catch (err) {
-      setError(err.message || '创建下载任务失败');
+      setError(friendlyError(err.message));
     }
   }, []);
 

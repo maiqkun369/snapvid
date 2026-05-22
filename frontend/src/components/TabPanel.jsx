@@ -14,7 +14,7 @@ function TabPanel({ currentTask, refreshHistory }) {
     { id: 'history', label: '下载历史' },
     { id: 'tools', label: 'AI 工具' },
     { id: 'cloud', label: '云盘' },
-    { id: 'cookies', label: 'Cookies' },
+    { id: 'accounts', label: '账号' },
     { id: 'pricing', label: '会员' },
     { id: 'platforms', label: '平台' },
   ];
@@ -62,7 +62,7 @@ function TabPanel({ currentTask, refreshHistory }) {
           </div>
         )}
 
-        {activeTab === 'cookies' && (
+        {activeTab === 'accounts' && (
           <CookieManager />
         )}
 
