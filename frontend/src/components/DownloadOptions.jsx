@@ -259,16 +259,11 @@ function DownloadOptions({ videoInfo, onDownload }) {
               </label>
             )}
 
-            {/* Proxy */}
-            <div>
-              <label className="block text-xs text-white/40 mb-2">代理 (可选)</label>
-              <input type="text" value={proxy} onChange={(e) => setProxy(e.target.value)}
-                placeholder="socks5://127.0.0.1:1080" className="input-field text-sm" />
-            </div>
+            {/* Proxy - hidden from UI, use env var instead */}
 
-            {/* === New Features === */}
+            {/* === Useful Advanced Features === */}
             <div className="pt-3 mt-3 border-t border-white/[0.04] space-y-3">
-              <p className="text-[10px] text-white/25 tracking-widest uppercase">进阶功能</p>
+              <p className="text-xs text-white/30 tracking-widest uppercase">进阶功能</p>
 
               {/* Video section clip */}
               <div>
@@ -280,7 +275,7 @@ function DownloadOptions({ videoInfo, onDownload }) {
 
               {/* Concurrent fragments */}
               <div>
-                <label className="block text-xs text-white/40 mb-2">多线程加速 (并发数)</label>
+                <label className="block text-xs text-white/40 mb-2">多线程加速</label>
                 <div className="flex items-center gap-3">
                   <input type="range" min="1" max="16" value={concurrentFragments}
                     onChange={(e) => setConcurrentFragments(parseInt(e.target.value))}
@@ -288,152 +283,31 @@ function DownloadOptions({ videoInfo, onDownload }) {
                   <span className="text-xs text-white/50 w-8 text-right">{concurrentFragments}x</span>
                 </div>
                 {concurrentFragments > 1 && (
-                  <p className="text-[10px] text-purple-300/50 mt-1">PRO 功能 · {concurrentFragments} 线程并发下载</p>
+                  <p className="text-[10px] text-purple-300/50 mt-1">PRO · {concurrentFragments} 线程并发</p>
                 )}
               </div>
 
               {/* Remux format conversion */}
               <div>
-                <label className="block text-xs text-white/40 mb-2">格式转换 (无损重封装)</label>
+                <label className="block text-xs text-white/40 mb-2">格式转换</label>
                 <select value={remuxFormat} onChange={(e) => setRemuxFormat(e.target.value)} className="input-field text-sm">
                   <option value="">不转换</option>
                   <option value="mp4">转为 MP4</option>
                   <option value="mkv">转为 MKV</option>
                   <option value="webm">转为 WebM</option>
                   <option value="mov">转为 MOV</option>
-                  <option value="avi">转为 AVI</option>
                 </select>
               </div>
 
-              {/* Custom filename template */}
+              {/* Quality preference */}
               <div>
-                <label className="block text-xs text-white/40 mb-2">自定义文件名</label>
-                <input type="text" value={outputTemplate} onChange={(e) => setOutputTemplate(e.target.value)}
-                  placeholder="留空使用默认，支持: %(title)s %(uploader)s %(upload_date)s" className="input-field text-sm" />
-                <p className="text-[10px] text-white/20 mt-1">变量: %(title)s %(uploader)s %(upload_date)s %(resolution)s %(ext)s</p>
-              </div>
-
-              {/* === Roadmap Features === */}
-              <div className="pt-3 mt-3 border-t border-white/[0.04] space-y-3">
-                <p className="text-xs text-white/30 tracking-widest uppercase">智能功能</p>
-
-                {/* Checkboxes row */}
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-xs text-white/50">
-                    <input type="checkbox" checked={writeComments} onChange={(e) => setWriteComments(e.target.checked)} className="rounded" />
-                    导出视频评论
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-white/50">
-                    <input type="checkbox" checked={useArchive} onChange={(e) => setUseArchive(e.target.checked)} className="rounded" />
-                    跳过已下载视频 (去重)
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-white/50">
-                    <input type="checkbox" checked={safeMode} onChange={(e) => setSafeMode(e.target.checked)} className="rounded" />
-                    安全模式 (请求间隔防封)
-                    <span className="text-[10px] px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded">PRO</span>
-                  </label>
-                  {playlist && (
-                    <label className="flex items-center gap-2 text-xs text-white/50">
-                      <input type="checkbox" checked={playlistRandom} onChange={(e) => setPlaylistRandom(e.target.checked)} className="rounded" />
-                      随机顺序下载
-                    </label>
-                  )}
-                </div>
-
-                {/* Filter section */}
-                <div className="pt-3 mt-3 border-t border-white/[0.04] space-y-3">
-                  <p className="text-xs text-white/30 tracking-widest uppercase">筛选条件</p>
-
-                  {/* Duration filter */}
-                  <div>
-                    <label className="block text-xs text-white/40 mb-2">时长范围 (秒)</label>
-                    <div className="flex items-center gap-2">
-                      <input type="number" value={filterDurationMin} onChange={(e) => setFilterDurationMin(e.target.value)}
-                        placeholder="最小" className="input-field text-sm flex-1" min="0" />
-                      <span className="text-white/30">-</span>
-                      <input type="number" value={filterDurationMax} onChange={(e) => setFilterDurationMax(e.target.value)}
-                        placeholder="最大" className="input-field text-sm flex-1" min="0" />
-                    </div>
-                  </div>
-
-                  {/* File size filter */}
-                  <div>
-                    <label className="block text-xs text-white/40 mb-2">文件大小范围</label>
-                    <div className="flex items-center gap-2">
-                      <input type="text" value={minFilesize} onChange={(e) => setMinFilesize(e.target.value)}
-                        placeholder="最小 如10M" className="input-field text-sm flex-1" />
-                      <span className="text-white/30">-</span>
-                      <input type="text" value={maxFilesize} onChange={(e) => setMaxFilesize(e.target.value)}
-                        placeholder="最大 如500M" className="input-field text-sm flex-1" />
-                    </div>
-                  </div>
-
-                  {/* Date range filter */}
-                  <div>
-                    <label className="block text-xs text-white/40 mb-2">发布日期范围</label>
-                    <div className="flex items-center gap-2">
-                      <input type="text" value={dateAfter} onChange={(e) => setDateAfter(e.target.value)}
-                        placeholder="起始 YYYYMMDD" className="input-field text-sm flex-1" />
-                      <span className="text-white/30">-</span>
-                      <input type="text" value={dateBefore} onChange={(e) => setDateBefore(e.target.value)}
-                        placeholder="结束 YYYYMMDD" className="input-field text-sm flex-1" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quality preference */}
-                <div className="pt-3 mt-3 border-t border-white/[0.04] space-y-3">
-                  <p className="text-xs text-white/30 tracking-widest uppercase">偏好设置</p>
-
-                  <div>
-                    <label className="block text-xs text-white/40 mb-2">画质偏好</label>
-                    <select value={formatSort} onChange={(e) => setFormatSort(e.target.value)} className="input-field text-sm">
-                      <option value="">默认 (最佳画质)</option>
-                      <option value="res:1080">优先 1080P</option>
-                      <option value="res:720">优先 720P (省流)</option>
-                      <option value="filesize">优先小体积</option>
-                      <option value="hdr">优先 HDR</option>
-                      <option value="fps">优先高帧率 (60fps)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-white/40 mb-2">地区解锁</label>
-                    <select value={geoBypassCountry} onChange={(e) => setGeoBypassCountry(e.target.value)} className="input-field text-sm">
-                      <option value="">不使用</option>
-                      <option value="US">美国 (US)</option>
-                      <option value="JP">日本 (JP)</option>
-                      <option value="KR">韩国 (KR)</option>
-                      <option value="GB">英国 (GB)</option>
-                      <option value="HK">香港 (HK)</option>
-                      <option value="TW">台湾 (TW)</option>
-                    </select>
-                  </div>
-
-                  {/* Subtitle format conversion */}
-                  {subtitles && (
-                    <div>
-                      <label className="block text-xs text-white/40 mb-2">字幕格式转换</label>
-                      <select value={convertSubsFormat} onChange={(e) => setConvertSubsFormat(e.target.value)} className="input-field text-sm">
-                        <option value="">不转换</option>
-                        <option value="srt">SRT</option>
-                        <option value="ass">ASS</option>
-                        <option value="vtt">VTT</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Thumbnail format conversion */}
-                  <div>
-                    <label className="block text-xs text-white/40 mb-2">封面格式转换</label>
-                    <select value={convertThumbnailFormat} onChange={(e) => setConvertThumbnailFormat(e.target.value)} className="input-field text-sm">
-                      <option value="">不转换 (默认)</option>
-                      <option value="png">PNG</option>
-                      <option value="jpg">JPG</option>
-                      <option value="webp">WebP</option>
-                    </select>
-                  </div>
-                </div>
+                <label className="block text-xs text-white/40 mb-2">画质偏好</label>
+                <select value={formatSort} onChange={(e) => setFormatSort(e.target.value)} className="input-field text-sm">
+                  <option value="">默认 (最佳画质)</option>
+                  <option value="res:1080">优先 1080P</option>
+                  <option value="res:720">优先 720P (省流量)</option>
+                  <option value="filesize">优先小体积</option>
+                </select>
               </div>
             </div>
           </div>
