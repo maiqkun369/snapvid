@@ -39,28 +39,13 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  // Restore state from localStorage on mount
-  const [videoInfo, setVideoInfo] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('snapvid_videoInfo')); } catch { return null; }
-  });
+  // Video state - no longer persisted, fresh on each visit
+  const [videoInfo, setVideoInfo] = useState(null);
   const [batchResults, setBatchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [currentTask, setCurrentTask] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('snapvid_currentTask')); } catch { return null; }
-  });
+  const [currentTask, setCurrentTask] = useState(null);
   const [refreshHistory, setRefreshHistory] = useState(0);
-
-  // Persist videoInfo and currentTask to localStorage
-  useEffect(() => {
-    if (videoInfo) localStorage.setItem('snapvid_videoInfo', JSON.stringify(videoInfo));
-    else localStorage.removeItem('snapvid_videoInfo');
-  }, [videoInfo]);
-
-  useEffect(() => {
-    if (currentTask) localStorage.setItem('snapvid_currentTask', JSON.stringify(currentTask));
-    else localStorage.removeItem('snapvid_currentTask');
-  }, [currentTask]);
 
   const handleParse = useCallback(async (url) => {
     setLoading(true);
