@@ -229,12 +229,9 @@ class DownloaderService:
                 fallback_info = await self._try_youtube_fallback(url)
                 if fallback_info:
                     return fallback_info
-                # YouTube is blocked in China - give clear user-facing message
                 raise ValueError(
-                    "YouTube 视频暂时无法解析。可能原因：\n"
-                    "1. 当前网络环境无法访问 YouTube（需要配置代理）\n"
-                    "2. 视频已被删除或设为私密\n\n"
-                    "解决方案：在「高级选项 → 代理」中填入可访问 YouTube 的代理地址"
+                    "YouTube 暂不可用。当前网络环境无法连接 YouTube 服务器，"
+                    "建议使用 Bilibili、抖音等国内平台的视频链接。"
                 )
             raise  # Re-raise if no fallback or fallback failed
 

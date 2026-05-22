@@ -239,7 +239,11 @@ class AuthService:
             }
 
         phone = payload["phone"]
-        plan = payload.get("plan", "free")
+        # Always check real-time plan from DB (in case admin upgraded)
+        db = _get_db()
+        user = db.execute("SELECT plan FROM users WHERE phone = ?", (phone,)).fetchone()
+        db.close()
+        plan = user["plan"] if user else payload.get("plan", "free")
         remaining = self._get_daily_remaining(phone, plan)
 
         if plan != "pro" and remaining <= 0:

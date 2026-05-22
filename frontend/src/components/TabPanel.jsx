@@ -5,7 +5,6 @@ import CloudSync from './CloudSync.jsx';
 import PricingPanel from './PricingPanel.jsx';
 import Features from './Features.jsx';
 import PlatformList from './PlatformList.jsx';
-import CookieManager from './CookieManager.jsx';
 
 function TabPanel({ currentTask, refreshHistory }) {
   const [activeTab, setActiveTab] = useState('history');
@@ -14,7 +13,6 @@ function TabPanel({ currentTask, refreshHistory }) {
     { id: 'history', label: '下载历史' },
     { id: 'tools', label: 'AI 工具' },
     { id: 'cloud', label: '云盘' },
-    { id: 'accounts', label: '账号' },
     { id: 'pricing', label: '会员' },
     { id: 'platforms', label: '平台' },
   ];
@@ -60,10 +58,6 @@ function TabPanel({ currentTask, refreshHistory }) {
               <p className="text-sm text-white/30 text-center py-8">下载视频后可同步到云盘</p>
             )}
           </div>
-        )}
-
-        {activeTab === 'accounts' && (
-          <CookieManager />
         )}
 
         {activeTab === 'pricing' && (
