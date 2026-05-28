@@ -730,12 +730,18 @@ async def editor_export(task_id: str = "", edit_plan: str = "{}") -> dict:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/editor/stream/{filename}")
-async def editor_stream_video(filename: str):
-    """Stream video file for in-browser playback."""
+@router.get("/editor/stream/{task_id}")
+async def editor_stream_video(task_id: str):
+    """Stream video file for in-browser playback by task ID."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="文件不存在")
     downloads_dir = downloader_service.get_downloads_dir()
-    file_path = downloads_dir / filename
+    file_path = downloads_dir / task.filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="文件不存在")
-    return FileResponse(path=str(file_path), media_type="video/mp4")
+    # Determine media type from extension
+    ext = file_path.suffix.lower()
+    mt = {".mp4": "video/mp4", ".webm": "video/webm", ".mkv": "video/x-matroska", ".mov": "video/quicktime"}
+    return FileResponse(path=str(file_path), media_type=mt.get(ext, "video/mp4"))
 

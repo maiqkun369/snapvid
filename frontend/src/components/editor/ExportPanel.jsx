@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function ExportPanel({ taskId, clips }) {
+function ExportPanel({ taskId, clips, texts = [] }) {
   const [format, setFormat] = useState('mp4');
   const [resolution, setResolution] = useState('original');
   const [quality, setQuality] = useState('high');
@@ -23,7 +23,13 @@ function ExportPanel({ taskId, clips }) {
       output_format: format,
       resolution,
       quality,
-      texts: [],
+      texts: texts.map(t => ({
+        content: t.content,
+        start: t.start,
+        duration: t.duration,
+        position: t.position,
+        size: t.size,
+      })),
     };
 
     try {
