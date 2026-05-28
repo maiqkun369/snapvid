@@ -314,9 +314,15 @@ class MediaToolsService:
         }
         pos = pos_map.get(position, pos_map["bottomright"])
 
+        # Sanitize text to prevent ffmpeg filter injection
+        import re
+        safe_text = re.sub(r"['\";\\:`${}|&<>]", "", text)[:50]  # Strip dangerous chars, limit length
+        if not safe_text:
+            safe_text = "SnapVid"
+
         cmd = [
             "ffmpeg", "-y", "-i", str(path),
-            "-vf", f"drawtext=text='{text}':fontsize=24:fontcolor=white@0.7:{pos}",
+            "-vf", f"drawtext=text='{safe_text}':fontsize=24:fontcolor=white@0.7:{pos}",
             "-c:a", "copy", str(output)
         ]
 
@@ -414,7 +420,16 @@ class MediaToolsService:
 
             width = video_stream.get("width", 0)
             height = video_stream.get("height", 0)
-            fps = eval(video_stream.get("r_frame_rate", "0/1")) if video_stream.get("r_frame_rate") else 0
+            # Safe fps parsing (e.g. "30000/1001" → 29.97)
+            fps_str = video_stream.get("r_frame_rate", "0/1")
+            try:
+                if "/" in fps_str:
+                    num, den = fps_str.split("/")
+                    fps = float(num) / float(den) if float(den) != 0 else 0
+                else:
+                    fps = float(fps_str)
+            except (ValueError, ZeroDivisionError):
+                fps = 0
             codec = video_stream.get("codec_name", "unknown")
 
             mins = int(duration) // 60

@@ -17,10 +17,16 @@ import jwt
 
 logger = logging.getLogger(__name__)
 
-# JWT Config
-JWT_SECRET = os.environ.get("JWT_SECRET", "snapvid_jwt_secret_2026_change_in_production")
+# JWT Config - MUST be set via environment variable in production
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
+if not JWT_SECRET:
+    JWT_SECRET = "dev_secret_" + os.environ.get("HOSTNAME", "local")
+    logger.warning("JWT_SECRET not set! Using insecure default. Set JWT_SECRET env var in production!")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = 72
+
+# Environment mode
+IS_PRODUCTION = os.environ.get("ENV", "").lower() == "production"
 
 # Database
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/app/data"))
@@ -53,8 +59,9 @@ PLAN_LIMITS = {
 
 def _get_db() -> sqlite3.Connection:
     """Get SQLite connection, create tables if needed."""
-    conn = sqlite3.connect(str(DB_PATH))
+    conn = sqlite3.connect(str(DB_PATH), timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")  # Better concurrent access
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             phone TEXT PRIMARY KEY,
@@ -144,8 +151,8 @@ class AuthService:
 
         db = _get_db()
 
-        # Dev mode: universal code 000000 always works
-        is_dev_code = (code == "000000")
+        # Dev mode: universal code only works in non-production
+        is_dev_code = (code == "000000" and not IS_PRODUCTION)
 
         if not is_dev_code:
             # Verify code from database

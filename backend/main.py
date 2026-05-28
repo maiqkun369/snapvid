@@ -1,5 +1,6 @@
 """FastAPI application entry point for ytdlp-web."""
 
+import asyncio
 import os
 from pathlib import Path
 
@@ -7,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import router
+from api.routes import router, scheduler_service, downloader_service
 
 # Create downloads directory
 DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", "/app/downloads"))
@@ -17,20 +18,65 @@ except OSError:
     DOWNLOADS_DIR = Path("./downloads")
     DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Environment
+IS_PRODUCTION = os.environ.get("ENV", "").lower() == "production"
+
 app = FastAPI(
-    title="ytdlp-web",
-    description="Web-based video downloader powered by yt-dlp",
-    version="1.0.0",
+    title="SnapVid",
+    description="Web-based video downloader and editor",
+    version="2.0.0",
 )
 
-# CORS middleware for development
+# CORS - restrict in production
+ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
+if IS_PRODUCTION and ALLOWED_ORIGINS == ["*"]:
+    # In production without explicit config, only allow same-origin
+    ALLOWED_ORIGINS = []
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS != ["*"] else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Health check endpoint (outside /api prefix for load balancers)
+@app.get("/health")
+async def health_check():
+    """Health check for container orchestration."""
+    return {
+        "status": "healthy",
+        "version": "2.0.0",
+        "downloads_dir_exists": DOWNLOADS_DIR.exists(),
+    }
+
+
+# Scheduled downloads background task
+async def _scheduler_loop():
+    """Background loop that checks for due scheduled downloads every 30s."""
+    from api.schemas import DownloadRequest
+    while True:
+        try:
+            due = scheduler_service.get_due_downloads()
+            for item in due:
+                try:
+                    req = DownloadRequest(url=item["url"])
+                    task_id = await downloader_service.start_download(req, owner=item["phone"])
+                    scheduler_service.mark_executed(item["id"], task_id)
+                except Exception:
+                    scheduler_service.mark_executed(item["id"], "failed")
+        except Exception:
+            pass
+        await asyncio.sleep(30)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background tasks on app startup."""
+    asyncio.create_task(_scheduler_loop())
+
 
 # Include API routes
 app.include_router(router, prefix="/api")

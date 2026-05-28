@@ -125,6 +125,7 @@ class DownloaderService:
         self._websockets: dict[str, WebSocket] = {}
         self._active_loops: dict[str, asyncio.AbstractEventLoop] = {}
         self._comments: dict[str, list] = {}  # task_id -> comments list
+        self._download_semaphore = asyncio.Semaphore(5)  # Max 5 concurrent downloads
         # Rebuild task list from existing files on disk
         self._scan_existing_files()
 
@@ -416,6 +417,11 @@ class DownloaderService:
         return task_id
 
     async def _run_download(self, task_id: str, request: DownloadRequest) -> None:
+        """Run the download task with concurrency control."""
+        async with self._download_semaphore:
+            await self._run_download_inner(task_id, request)
+
+    async def _run_download_inner(self, task_id: str, request: DownloadRequest) -> None:
         """Run the download task with all yt-dlp features."""
         task = self._tasks.get(task_id)
         if task is None:

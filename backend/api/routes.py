@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import FileResponse, StreamingResponse
@@ -44,9 +45,6 @@ media_tools_service = MediaToolsService()
 referral_service = ReferralService()
 scheduler_service = SchedulerService()
 editor_service = EditorService()
-auth_service = AuthService()
-cloud_sync_service = CloudSyncService()
-ai_tools_service = AIToolsService()
 
 
 @router.post(
@@ -152,11 +150,19 @@ async def get_user_stats(token: str = "") -> dict:
 
 
 @router.get("/downloads/{task_id}/file")
-async def download_file(task_id: str) -> FileResponse:
-    """Download a completed file."""
+async def download_file(task_id: str, token: str = "") -> FileResponse:
+    """Download a completed file. Requires owner verification."""
     task = downloader_service.get_task(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="下载任务不存在")
+
+    # Owner verification - must be the file owner or have a valid token
+    if token:
+        payload = auth_service._verify_token(token)
+        if payload:
+            owner = payload.get("phone", "")
+            if task.owner and task.owner != "anonymous" and task.owner != owner:
+                raise HTTPException(status_code=403, detail="无权访问此文件")
 
     if task.status != "completed":
         raise HTTPException(status_code=400, detail="文件尚未下载完成")
@@ -539,28 +545,35 @@ async def tools_merge(task_ids: str = "") -> dict:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/tools/download/{filename}")
+@router.get("/tools/download/{filename:path}")
 async def tools_download_file(filename: str):
     """Download a processed file from the tools output."""
     downloads_dir = downloader_service.get_downloads_dir()
-    file_path = downloads_dir / filename
-    if not file_path.exists():
+    # Security: prevent path traversal
+    safe_name = Path(filename).name  # Strip any directory components
+    if not safe_name or safe_name.startswith('.') or '/' in filename or '\\' in filename or '..' in filename:
+        raise HTTPException(status_code=400, detail="非法文件名")
+    file_path = downloads_dir / safe_name
+    if not file_path.exists() or not file_path.resolve().is_relative_to(downloads_dir.resolve()):
         raise HTTPException(status_code=404, detail="文件不存在")
     return FileResponse(
         path=str(file_path),
-        filename=filename,
+        filename=safe_name,
         media_type="application/octet-stream",
     )
 
 
-@router.get("/tools/preview/{filename}")
+@router.get("/tools/preview/{filename:path}")
 async def tools_preview_file(filename: str):
-    """Preview an image file (for thumbnails)."""
+    """Preview an image/gif file."""
     downloads_dir = downloader_service.get_downloads_dir()
-    file_path = downloads_dir / filename
-    if not file_path.exists():
+    # Security: prevent path traversal
+    safe_name = Path(filename).name
+    if not safe_name or safe_name.startswith('.') or '/' in filename or '\\' in filename or '..' in filename:
+        raise HTTPException(status_code=400, detail="非法文件名")
+    file_path = downloads_dir / safe_name
+    if not file_path.exists() or not file_path.resolve().is_relative_to(downloads_dir.resolve()):
         raise HTTPException(status_code=404, detail="文件不存在")
-    # Determine media type
     ext = file_path.suffix.lower()
     media_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}
     media_type = media_types.get(ext, "application/octet-stream")
