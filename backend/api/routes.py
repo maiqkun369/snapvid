@@ -743,6 +743,44 @@ async def editor_export(task_id: str = "", edit_plan: str = "{}") -> dict:
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/editor/export-multi")
+async def editor_export_multi(request: Request) -> dict:
+    """Export a multi-source edit (clips from different videos)."""
+    import json as _json
+    body = await request.json()
+    clips = body.get("clips", [])
+    if not clips:
+        raise HTTPException(status_code=400, detail="至少需要一个片段")
+
+    # Resolve file paths for each clip
+    resolved_clips = []
+    for clip in clips:
+        task_id = clip.get("task_id")
+        task = downloader_service.get_task(task_id)
+        if not task or not task.filename:
+            raise HTTPException(status_code=404, detail=f"任务 {task_id} 不存在或未完成")
+        file_path = str(downloader_service.get_downloads_dir() / task.filename)
+        resolved_clips.append({
+            "file_path": file_path,
+            "start": clip.get("start", "00:00"),
+            "end": clip.get("end", ""),
+            "speed": clip.get("speed", 1.0),
+        })
+
+    plan = {
+        "clips": resolved_clips,
+        "output_format": body.get("output_format", "mp4"),
+        "resolution": body.get("resolution", "original"),
+        "quality": body.get("quality", "high"),
+        "texts": body.get("texts", []),
+    }
+
+    try:
+        return await editor_service.export_multi_source(plan)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/editor/stream/{task_id}")
 async def editor_stream_video(task_id: str, request: Request):
     """Stream video file with Range support for in-browser playback."""

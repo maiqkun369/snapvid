@@ -248,3 +248,91 @@ class EditorService:
 
     def get_job_status(self, job_id: str) -> Optional[dict]:
         return self._jobs.get(job_id)
+
+    async def export_multi_source(self, plan: dict) -> dict:
+        """Export a multi-source edit - clips from different video files.
+        
+        plan: {
+            clips: [{file_path, start, end, speed}],
+            output_format, resolution, quality, texts
+        }
+        """
+        clips = plan.get("clips", [])
+        output_format = plan.get("output_format", "mp4")
+        resolution = plan.get("resolution", "original")
+        quality = plan.get("quality", "high")
+        texts = plan.get("texts", [])
+
+        if not clips:
+            raise ValueError("至少需要一个片段")
+
+        job_id = str(uuid.uuid4())
+        self._jobs[job_id] = {"status": "processing", "progress": 0}
+
+        crf_map = {"high": 18, "medium": 23, "low": 28}
+        crf = crf_map.get(quality, 23)
+        scale_map = {"1080p": "1920:-2", "720p": "1280:-2", "480p": "854:-2"}
+        scale_filter = f"scale={scale_map[resolution]}" if resolution in scale_map else None
+
+        output_path = DOWNLOADS_DIR / f"edit_{job_id}.{output_format}"
+
+        try:
+            # Step 1: Export each clip from its source as temp file
+            temp_files = []
+            for i, clip in enumerate(clips):
+                temp_path = DOWNLOADS_DIR / f"_temp_multi_{i}_{job_id[:8]}.mp4"
+                source = Path(clip["file_path"])
+                if not source.exists():
+                    raise ValueError(f"源文件不存在: {source.name}")
+                await self._export_single_clip(source, clip, temp_path, crf, scale_filter)
+                temp_files.append(temp_path)
+
+            # Step 2: Concat all clips
+            concat_file = DOWNLOADS_DIR / f"_concat_multi_{job_id[:8]}.txt"
+            with open(concat_file, "w") as f:
+                for tf in temp_files:
+                    f.write(f"file '{tf}'\n")
+
+            cmd = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file)]
+
+            if texts:
+                import re
+                vf_parts = []
+                for t in texts:
+                    safe_content = re.sub(r"['\";\\:`${}|&<>]", "", t.get("content", ""))[:50]
+                    start_t = t.get("start", 0)
+                    dur = t.get("duration", 3)
+                    pos = t.get("position", "bottom")
+                    size = t.get("size", 36)
+                    pos_map = {"center": "x=(w-tw)/2:y=(h-th)/2", "top": "x=(w-tw)/2:y=50", "bottom": "x=(w-tw)/2:y=h-th-50"}
+                    xy = pos_map.get(pos, pos_map["bottom"])
+                    vf_parts.append(f"drawtext=text='{safe_content}':fontsize={size}:fontcolor=white:{xy}:enable='between(t,{start_t},{start_t+dur})'")
+                cmd.extend(["-vf", ",".join(vf_parts), "-c:v", "libx264", "-crf", str(crf), "-c:a", "aac"])
+            else:
+                cmd.extend(["-c", "copy"])
+
+            cmd.append(str(output_path))
+
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+            )
+
+            # Cleanup
+            for tf in temp_files:
+                tf.unlink(missing_ok=True)
+            concat_file.unlink(missing_ok=True)
+
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr[-300:] if result.stderr else "合并失败")
+
+            self._jobs[job_id] = {"status": "completed", "progress": 100}
+            return {
+                "job_id": job_id,
+                "status": "completed",
+                "output_filename": output_path.name,
+                "output_size": output_path.stat().st_size,
+                "message": f"导出完成 ({len(clips)} 段来自 {len(set(c['file_path'] for c in clips))} 个视频)",
+            }
+        except Exception as e:
+            self._jobs[job_id] = {"status": "failed", "error": str(e)}
+            raise ValueError(f"多源导出失败: {str(e)}")
