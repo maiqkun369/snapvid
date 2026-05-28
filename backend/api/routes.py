@@ -31,6 +31,7 @@ from services.ai_tools import AIToolsService
 from services.media_tools import MediaToolsService
 from services.referral import ReferralService
 from services.scheduler import SchedulerService
+from services.editor import EditorService
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ ai_tools_service = AIToolsService()
 media_tools_service = MediaToolsService()
 referral_service = ReferralService()
 scheduler_service = SchedulerService()
+editor_service = EditorService()
 auth_service = AuthService()
 cloud_sync_service = CloudSyncService()
 ai_tools_service = AIToolsService()
@@ -693,4 +695,47 @@ async def cancel_scheduled_download(schedule_id: str) -> dict:
     if not success:
         raise HTTPException(status_code=404, detail="定时任务不存在或已执行")
     return {"message": "已取消"}
+
+
+# === Video Editor ===
+
+@router.post("/editor/thumbnails")
+async def editor_thumbnails(task_id: str = "", count: int = 20) -> dict:
+    """Generate timeline thumbnail strip for a video."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await editor_service.generate_thumbnails(file_path, count)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/editor/export")
+async def editor_export(task_id: str = "", edit_plan: str = "{}") -> dict:
+    """Export edited video based on edit plan JSON."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    import json as _json
+    try:
+        plan = _json.loads(edit_plan)
+    except _json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="编辑方案格式错误")
+    try:
+        return await editor_service.export_edit(file_path, plan)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/editor/stream/{filename}")
+async def editor_stream_video(filename: str):
+    """Stream video file for in-browser playback."""
+    downloads_dir = downloader_service.get_downloads_dir()
+    file_path = downloads_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="文件不存在")
+    return FileResponse(path=str(file_path), media_type="video/mp4")
 
