@@ -29,6 +29,8 @@ from services.auth import AuthService
 from services.cloud_sync import CloudSyncService
 from services.ai_tools import AIToolsService
 from services.media_tools import MediaToolsService
+from services.referral import ReferralService
+from services.scheduler import SchedulerService
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,8 @@ auth_service = AuthService()
 cloud_sync_service = CloudSyncService()
 ai_tools_service = AIToolsService()
 media_tools_service = MediaToolsService()
+referral_service = ReferralService()
+scheduler_service = SchedulerService()
 auth_service = AuthService()
 cloud_sync_service = CloudSyncService()
 ai_tools_service = AIToolsService()
@@ -612,4 +616,81 @@ async def tools_video_summary(task_id: str = "") -> dict:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+# === Referral/Invite System ===
+
+@router.get("/invite/code")
+async def get_invite_code(token: str = "") -> dict:
+    """Generate or get invite code for current user."""
+    if not token:
+        raise HTTPException(status_code=401, detail="请先登录")
+    payload = auth_service._verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="登录已过期")
+    phone = payload["phone"]
+    return referral_service.generate_invite_code(phone)
+
+
+@router.post("/invite/use")
+async def use_invite_code(token: str = "", code: str = "") -> dict:
+    """Use an invite code to get Pro days."""
+    if not token:
+        raise HTTPException(status_code=401, detail="请先登录")
+    payload = auth_service._verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="登录已过期")
+    phone = payload["phone"]
+    try:
+        return referral_service.use_invite_code(phone, code)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/invite/stats")
+async def get_invite_stats(token: str = "") -> dict:
+    """Get invite statistics."""
+    if not token:
+        raise HTTPException(status_code=401, detail="请先登录")
+    payload = auth_service._verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="登录已过期")
+    phone = payload["phone"]
+    return referral_service.get_invite_stats(phone)
+
+
+# === Scheduled Downloads ===
+
+@router.post("/schedule")
+async def schedule_download(token: str = "", url: str = "", scheduled_at: str = "") -> dict:
+    """Schedule a download for later."""
+    if not token:
+        raise HTTPException(status_code=401, detail="请先登录")
+    payload = auth_service._verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="登录已过期")
+    if not url or not scheduled_at:
+        raise HTTPException(status_code=400, detail="请提供URL和定时时间")
+    phone = payload["phone"]
+    return scheduler_service.schedule_download(phone, url, scheduled_at)
+
+
+@router.get("/schedule")
+async def get_scheduled_downloads(token: str = "") -> list[dict]:
+    """Get scheduled downloads."""
+    if not token:
+        raise HTTPException(status_code=401, detail="请先登录")
+    payload = auth_service._verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="登录已过期")
+    phone = payload["phone"]
+    return scheduler_service.get_scheduled(phone)
+
+
+@router.delete("/schedule/{schedule_id}")
+async def cancel_scheduled_download(schedule_id: str) -> dict:
+    """Cancel a scheduled download."""
+    success = scheduler_service.cancel_scheduled(schedule_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="定时任务不存在或已执行")
+    return {"message": "已取消"}
 

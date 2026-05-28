@@ -3,6 +3,7 @@ import TaskCenter from './dashboard/TaskCenter.jsx';
 import HistoryPanel from './dashboard/HistoryPanel.jsx';
 import Toolbox from './dashboard/Toolbox.jsx';
 import AccountPanel from './dashboard/AccountPanel.jsx';
+import SchedulePanel from './dashboard/SchedulePanel.jsx';
 
 function Dashboard({ user, onLogout, onNewDownload }) {
   const [activePanel, setActivePanel] = useState('tasks');
@@ -11,6 +12,7 @@ function Dashboard({ user, onLogout, onNewDownload }) {
     { id: 'tasks', label: '任务中心', icon: '📥' },
     { id: 'history', label: '下载历史', icon: '📁' },
     { id: 'tools', label: '工具箱', icon: '🔧' },
+    { id: 'schedule', label: '定时下载', icon: '⏰' },
     { id: 'account', label: '我的账户', icon: '👤' },
   ];
 
@@ -86,6 +88,7 @@ function Dashboard({ user, onLogout, onNewDownload }) {
             {activePanel === 'tasks' && <TaskCenter />}
             {activePanel === 'history' && <HistoryPanel />}
             {activePanel === 'tools' && <Toolbox />}
+            {activePanel === 'schedule' && <SchedulePanel />}
             {activePanel === 'account' && <AccountPanel />}
           </div>
         </main>

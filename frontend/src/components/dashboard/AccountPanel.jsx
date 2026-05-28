@@ -84,6 +84,67 @@ function AccountPanel() {
           </span>
         </div>
       </div>
+      {/* Invite Section */}
+      <div className="p-5 bg-white/[0.02] rounded-xl border border-white/[0.05] space-y-4">
+        <h3 className="text-sm text-white/60 font-medium">邀请好友</h3>
+        <p className="text-xs text-white/30">邀请好友注册，双方各得 7 天 Pro 会员</p>
+        <InviteSection />
+      </div>
+    </div>
+  );
+}
+
+function InviteSection() {
+  const [code, setCode] = useState('');
+  const [stats, setStats] = useState(null);
+  const [inputCode, setInputCode] = useState('');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('snapvid_token') || '';
+    fetch(`/api/invite/code?token=${token}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setCode(d.invite_code); });
+    fetch(`/api/invite/stats?token=${token}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setStats(d); });
+  }, []);
+
+  const handleUseCode = async () => {
+    const token = localStorage.getItem('snapvid_token') || '';
+    try {
+      const res = await fetch(`/api/invite/use?token=${token}&code=${inputCode}`, { method: 'POST' });
+      const data = await res.json();
+      setMessage(data.message || data.detail || '');
+    } catch (e) { setMessage('失败'); }
+  };
+
+  return (
+    <div className="space-y-3">
+      {code && (
+        <div className="flex items-center gap-3">
+          <code className="flex-1 px-3 py-2 bg-white/[0.05] rounded-lg text-sm text-cyan-300 font-mono">{code}</code>
+          <button onClick={() => { navigator.clipboard.writeText(code); setMessage('已复制'); }}
+            className="text-xs text-white/50 hover:text-white/70 px-3 py-2 rounded-lg hover:bg-white/[0.05] transition-colors">
+            复制
+          </button>
+        </div>
+      )}
+      {stats && (
+        <p className="text-xs text-white/30">
+          已邀请 {stats.successful_invites} 人 · 累计获得 {stats.earned_days} 天 Pro
+        </p>
+      )}
+      <div className="flex items-center gap-2">
+        <input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value)}
+          placeholder="输入好友邀请码"
+          className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none" />
+        <button onClick={handleUseCode} disabled={!inputCode}
+          className="text-xs text-white font-medium bg-white/10 px-3 py-2 rounded-lg hover:bg-white/15 transition-all disabled:opacity-30">
+          使用
+        </button>
+      </div>
+      {message && <p className="text-xs text-emerald-400/70">{message}</p>}
     </div>
   );
 }
