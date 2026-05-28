@@ -241,17 +241,43 @@ function Toolbox() {
 
       {/* Result */}
       {result && (
-        <div className="p-4 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 space-y-2">
-          <p className="text-sm text-emerald-300/80">✓ {result.message}</p>
-          {result.output_filename && (
-            <p className="text-xs text-white/40">输出文件: {result.output_filename}</p>
+        <div className="p-5 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 space-y-4">
+          <p className="text-sm text-emerald-300/80 font-medium">✓ {result.message}</p>
+
+          {/* Image preview for thumbnails */}
+          {result.output_filename && result.output_filename.match(/\.(jpg|jpeg|png|webp)$/i) && (
+            <div className="rounded-lg overflow-hidden border border-white/[0.08] bg-black/20">
+              <img
+                src={`/api/tools/preview/${encodeURIComponent(result.output_filename)}`}
+                alt="预览"
+                className="w-full max-h-[300px] object-contain"
+              />
+            </div>
           )}
-          {result.output_size && (
-            <p className="text-xs text-white/40">文件大小: {(result.output_size / 1024 / 1024).toFixed(1)} MB</p>
-          )}
-          {result.compression_ratio && (
-            <p className="text-xs text-white/40">体积减小: {result.compression_ratio}</p>
-          )}
+
+          {/* File info */}
+          <div className="flex items-center justify-between text-xs text-white/40">
+            <div className="space-y-1">
+              {result.output_filename && <p>文件: {result.output_filename.split('_').slice(-1)[0]}</p>}
+              {result.output_size > 0 && <p>大小: {(result.output_size / 1024 / 1024).toFixed(1)} MB</p>}
+              {result.compression_ratio && result.compression_ratio !== '0%' && <p>压缩: {result.compression_ratio}</p>}
+            </div>
+
+            {/* Download button */}
+            {result.output_filename && (
+              <a
+                href={`/api/tools/download/${encodeURIComponent(result.output_filename)}`}
+                download
+                className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium rounded-xl
+                  hover:scale-[1.02] hover:shadow-lg transition-all active:scale-[0.98]"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                下载文件
+              </a>
+            )}
+          </div>
         </div>
       )}
 

@@ -172,6 +172,20 @@ class MediaToolsService:
             new_size = output.stat().st_size
             ratio = (1 - new_size / original_size) * 100 if original_size > 0 else 0
 
+            # If compressed file is larger, delete it and return original
+            if new_size >= original_size:
+                output.unlink(missing_ok=True)
+                self._jobs[job_id] = {"status": "completed"}
+                return {
+                    "job_id": job_id,
+                    "status": "completed",
+                    "output_filename": path.name,
+                    "output_size": original_size,
+                    "original_size": original_size,
+                    "compression_ratio": "0%",
+                    "message": "文件已是最优体积，无需压缩",
+                }
+
             self._jobs[job_id] = {"status": "completed"}
             return {
                 "job_id": job_id,

@@ -532,3 +532,32 @@ async def tools_merge(task_ids: str = "") -> dict:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@router.get("/tools/download/{filename}")
+async def tools_download_file(filename: str):
+    """Download a processed file from the tools output."""
+    downloads_dir = downloader_service.get_downloads_dir()
+    file_path = downloads_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="文件不存在")
+    return FileResponse(
+        path=str(file_path),
+        filename=filename,
+        media_type="application/octet-stream",
+    )
+
+
+@router.get("/tools/preview/{filename}")
+async def tools_preview_file(filename: str):
+    """Preview an image file (for thumbnails)."""
+    downloads_dir = downloader_service.get_downloads_dir()
+    file_path = downloads_dir / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="文件不存在")
+    # Determine media type
+    ext = file_path.suffix.lower()
+    media_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    media_type = media_types.get(ext, "application/octet-stream")
+    return FileResponse(path=str(file_path), media_type=media_type)
+
+
