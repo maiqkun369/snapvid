@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 function Toolbox() {
   const [tasks, setTasks] = useState([]);
@@ -8,356 +8,295 @@ function Toolbox() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  // Fetch completed tasks for file selection
-  useEffect(() => {
-    const token = localStorage.getItem('snapvid_token') || '';
-    fetch(`/api/downloads?token=${token}&limit=20`)
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        const completed = data.filter(t => t.status === 'completed' && t.filename);
-        setTasks(completed);
-        if (completed.length > 0 && !selectedTask) setSelectedTask(completed[0].id);
-      })
-      .catch(() => {});
-  }, []);
+  // Video preview state
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewDuration, setPreviewDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const videoRef = useRef(null);
 
-  const tools = [
-    { id: 'convert', name: '格式转换', desc: '无损转换格式', icon: '🔄', pro: false },
-    { id: 'audio_extract', name: '音频提取', desc: '提取纯音频', icon: '🎵', pro: false },
-    { id: 'thumbnail', name: '封面提取', desc: '截取视频画面', icon: '🖼️', pro: false },
-    { id: 'gif', name: '视频转GIF', desc: '截取片段做动图', icon: '🎞️', pro: false },
-    { id: 'summary', name: '视频摘要', desc: '生成媒体信息', icon: '📋', pro: false },
-    { id: 'compress', name: '视频压缩', desc: '减小体积保画质', icon: '📦', pro: true },
-    { id: 'watermark_add', name: '添加水印', desc: '自定义文字水印', icon: '💧', pro: true },
-    { id: 'denoise', name: '音频降噪', desc: '去除背景噪音', icon: '🔇', pro: true },
-    { id: 'subtitle', name: 'AI 字幕', desc: '语音识别生成字幕', icon: '📝', pro: true },
-    { id: 'super_res', name: 'AI 超分', desc: '提升至2K/4K', icon: '✨', pro: true },
-    { id: 'watermark', name: 'AI 去水印', desc: '智能移除水印', icon: '🎨', pro: true },
-    { id: 'merge', name: '视频拼接', desc: '多视频合并', icon: '🔗', pro: true },
-  ];
-
-  // Tool-specific options
+  // Tool options
   const [convertFormat, setConvertFormat] = useState('mp4');
   const [audioFormat, setAudioFormat] = useState('mp3');
   const [audioQuality, setAudioQuality] = useState('192');
   const [thumbTime, setThumbTime] = useState('00:00:01');
   const [compressQuality, setCompressQuality] = useState('medium');
-  // New tool options
   const [gifStart, setGifStart] = useState('00:00:00');
   const [gifDuration, setGifDuration] = useState('5');
   const [wmText, setWmText] = useState('');
   const [wmPosition, setWmPosition] = useState('bottomright');
+  const [clipStart, setClipStart] = useState(0);
+  const [clipEnd, setClipEnd] = useState(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem('snapvid_token') || '';
+    fetch(`/api/downloads?token=${token}&limit=50`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        const completed = data.filter(t => t.status === 'completed' && t.filename);
+        setTasks(completed);
+        if (completed.length > 0 && !selectedTask) setSelectedTask(completed[0].id);
+      });
+  }, []);
+
+  // When task changes, reset preview
+  useEffect(() => {
+    setShowPreview(false);
+    setClipStart(0);
+    setClipEnd(0);
+  }, [selectedTask]);
+
+  const tools = [
+    { id: 'clip', name: '片段截取', desc: '精确截取视频片段', icon: '✂️', pro: false, needsPreview: true },
+    { id: 'convert', name: '格式转换', desc: '无损转换格式', icon: '🔄', pro: false },
+    { id: 'audio_extract', name: '音频提取', desc: '提取纯音频', icon: '🎵', pro: false },
+    { id: 'thumbnail', name: '封面截图', desc: '截取任意帧', icon: '🖼️', pro: false, needsPreview: true },
+    { id: 'gif', name: '视频转GIF', desc: '截取片段做动图', icon: '🎞️', pro: false, needsPreview: true },
+    { id: 'summary', name: '视频信息', desc: '查看媒体详情', icon: '📋', pro: false },
+    { id: 'compress', name: '视频压缩', desc: '减小体积', icon: '📦', pro: true },
+    { id: 'watermark_add', name: '添加水印', desc: '自定义文字', icon: '💧', pro: true },
+    { id: 'denoise', name: '音频降噪', desc: '去除噪音', icon: '🔇', pro: true },
+    { id: 'subtitle', name: 'AI 字幕', desc: '语音转字幕', icon: '📝', pro: true },
+    { id: 'super_res', name: 'AI 超分', desc: '画质提升', icon: '✨', pro: true },
+    { id: 'watermark', name: 'AI 去水印', desc: '移除水印', icon: '🎨', pro: true },
+  ];
+
+  const selectTool = (tool) => {
+    setActiveTool(tool.id);
+    setResult(null);
+    setError('');
+    if (tool.needsPreview) setShowPreview(true);
+    else setShowPreview(false);
+  };
+
+  const handleVideoLoaded = () => {
+    if (videoRef.current) {
+      setPreviewDuration(videoRef.current.duration);
+      setClipEnd(videoRef.current.duration);
+    }
+  };
+
+  const seekTo = (t) => { if (videoRef.current) { videoRef.current.currentTime = t; setCurrentTime(t); } };
 
   const handleExecute = async () => {
     if (!selectedTask || !activeTool) return;
-    setProcessing(true);
-    setResult(null);
-    setError('');
-
+    setProcessing(true); setResult(null); setError('');
     const token = localStorage.getItem('snapvid_token') || '';
     let url = '';
-    let params = `task_id=${selectedTask}`;
+    const params = `task_id=${selectedTask}`;
 
     switch (activeTool) {
-      case 'convert':
-        url = `/api/tools/convert?${params}&target_format=${convertFormat}`;
-        break;
-      case 'audio_extract':
-        url = `/api/tools/audio-extract?${params}&audio_format=${audioFormat}&quality=${audioQuality}`;
-        break;
-      case 'thumbnail':
-        url = `/api/tools/thumbnail?${params}&time_pos=${thumbTime}`;
-        break;
-      case 'compress':
-        url = `/api/tools/compress?${params}&quality=${compressQuality}`;
-        break;
-      case 'gif':
-        url = `/api/tools/gif?${params}&start=${gifStart}&duration=${gifDuration}&fps=15&width=480`;
-        break;
-      case 'watermark_add':
-        url = `/api/tools/watermark?${params}&text=${encodeURIComponent(wmText || 'SnapVid')}&position=${wmPosition}`;
-        break;
-      case 'denoise':
-        url = `/api/tools/denoise?${params}`;
-        break;
-      case 'summary':
-        url = `/api/tools/summary?${params}`;
-        break;
-      case 'subtitle':
-        url = `/api/ai/subtitle?${params}&language=auto&format=srt`;
-        break;
-      case 'super_res':
-        url = `/api/ai/super-resolution?${params}&scale=2x`;
-        break;
-      case 'watermark':
-        url = `/api/ai/watermark-removal?${params}`;
-        break;
-      default:
-        setError('功能开发中');
+      case 'clip':
+        url = `/api/tools/convert?${params}&target_format=mp4`;
+        // Use editor export for precise clip
+        try {
+          const res = await fetch(`/api/editor/export?${params}&edit_plan=${encodeURIComponent(JSON.stringify({
+            clips: [{ start: formatTime(clipStart), end: formatTime(clipEnd), speed: 1.0 }],
+            output_format: 'mp4', resolution: 'original', quality: 'high', texts: []
+          }))}`, { method: 'POST' });
+          const data = await res.json();
+          if (res.ok) setResult(data); else setError(data.detail || '截取失败');
+        } catch (e) { setError('网络错误'); }
         setProcessing(false);
         return;
+      case 'convert': url = `/api/tools/convert?${params}&target_format=${convertFormat}`; break;
+      case 'audio_extract': url = `/api/tools/audio-extract?${params}&audio_format=${audioFormat}&quality=${audioQuality}`; break;
+      case 'thumbnail': url = `/api/tools/thumbnail?${params}&time_pos=${thumbTime}`; break;
+      case 'gif': url = `/api/tools/gif?${params}&start=${gifStart}&duration=${gifDuration}&fps=15&width=480`; break;
+      case 'compress': url = `/api/tools/compress?${params}&quality=${compressQuality}`; break;
+      case 'watermark_add': url = `/api/tools/watermark?${params}&text=${encodeURIComponent(wmText||'SnapVid')}&position=${wmPosition}`; break;
+      case 'denoise': url = `/api/tools/denoise?${params}`; break;
+      case 'summary': url = `/api/tools/summary?${params}`; break;
+      case 'subtitle': url = `/api/ai/subtitle?${params}&language=auto&format=srt`; break;
+      case 'super_res': url = `/api/ai/super-resolution?${params}&scale=2x`; break;
+      case 'watermark': url = `/api/ai/watermark-removal?${params}`; break;
+      default: setError('功能开发中'); setProcessing(false); return;
     }
 
     try {
       const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
-      if (res.ok) {
-        setResult(data);
-      } else {
-        setError(data.detail || '处理失败');
-      }
-    } catch (e) {
-      setError('网络错误');
-    }
+      if (res.ok) setResult(data); else setError(data.detail || '处理失败');
+    } catch (e) { setError('网络错误'); }
     setProcessing(false);
   };
 
-  const handleDownloadResult = () => {
-    if (result?.output_filename) {
-      // Find parent task to get download URL
-      window.open(`/api/downloads/${selectedTask}/file`, '_blank');
-    }
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-medium text-white/80 mb-2">工具箱</h2>
-        <p className="text-sm text-white/30">选择已下载的视频，使用工具进行加工处理</p>
+        <h2 className="text-lg font-medium text-white/80 mb-1">工具箱</h2>
+        <p className="text-sm text-white/30">选择视频 → 选择工具 → 处理 → 下载</p>
       </div>
 
-      {/* File Selection */}
-      <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-        <label className="block text-xs text-white/40 mb-2">选择源文件</label>
+      {/* Step 1: File Selection */}
+      <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+        <label className="block text-xs text-white/40 mb-1.5">① 选择源文件</label>
         {tasks.length === 0 ? (
-          <p className="text-sm text-white/30">暂无已完成的下载，请先下载视频</p>
+          <p className="text-sm text-white/30">暂无已完成的下载</p>
         ) : (
-          <select
-            value={selectedTask}
-            onChange={(e) => setSelectedTask(e.target.value)}
-            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white/70 focus:outline-none focus:border-cyan-500/30"
-          >
+          <select value={selectedTask} onChange={(e) => setSelectedTask(e.target.value)}
+            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none focus:border-cyan-500/30">
             {tasks.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.title || t.filename} ({t.filesize ? `${(t.filesize / 1024 / 1024).toFixed(1)}MB` : '--'})
-              </option>
+              <option key={t.id} value={t.id}>{t.title || t.filename} ({t.filesize ? `${(t.filesize/1024/1024).toFixed(1)}MB` : ''})</option>
             ))}
           </select>
         )}
       </div>
 
-      {/* Tool Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {tools.map((tool) => (
-          <button
-            key={tool.id}
-            onClick={() => { setActiveTool(tool.id); setResult(null); setError(''); }}
-            disabled={tasks.length === 0}
-            className={`flex flex-col items-center gap-2 p-4 rounded-xl border text-center transition-all duration-200
-              ${activeTool === tool.id
-                ? 'bg-cyan-500/[0.08] border-cyan-500/30 scale-[1.02]'
-                : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.05]'
-              } disabled:opacity-30`}
-          >
-            <span className="text-2xl">{tool.icon}</span>
-            <div>
-              <span className="text-xs text-white/70 font-medium">{tool.name}</span>
-              {tool.pro && <span className="text-[9px] ml-1 px-1 py-0.5 bg-purple-500/20 text-purple-300 rounded">PRO</span>}
-            </div>
-          </button>
-        ))}
+      {/* Step 2: Tool Selection */}
+      <div>
+        <label className="block text-xs text-white/40 mb-2">② 选择工具</label>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-1.5">
+          {tools.map(tool => (
+            <button key={tool.id} onClick={() => selectTool(tool)} disabled={tasks.length === 0}
+              className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border transition-all ${
+                activeTool === tool.id ? 'bg-cyan-500/[0.1] border-cyan-500/30 scale-[1.02]' : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]'
+              } disabled:opacity-30`}>
+              <span className="text-lg">{tool.icon}</span>
+              <span className="text-[10px] text-white/60">{tool.name}</span>
+              {tool.pro && <span className="text-[8px] px-1 py-0 bg-purple-500/20 text-purple-300 rounded">PRO</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tool Options Panel */}
-      {activeTool && tasks.length > 0 && (
-        <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-4">
-          <p className="text-sm text-white/60 font-medium">
-            {tools.find(t => t.id === activeTool)?.icon} {tools.find(t => t.id === activeTool)?.name}
-          </p>
+      {/* Video Preview (for clip/gif/thumbnail tools) */}
+      {showPreview && selectedTask && (
+        <div className="rounded-xl overflow-hidden border border-white/[0.08] bg-black/40">
+          <video ref={videoRef} src={`/api/editor/stream/${selectedTask}`}
+            onLoadedMetadata={handleVideoLoaded}
+            onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
+            controls className="w-full max-h-[250px] object-contain" />
 
-          {/* Convert options */}
+          {/* Clip range sliders */}
+          {(activeTool === 'clip' || activeTool === 'gif') && previewDuration > 0 && (
+            <div className="px-4 py-3 bg-white/[0.02] border-t border-white/[0.06] space-y-2">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-white/40 w-6">入</span>
+                <input type="range" min="0" max={previewDuration} step="0.1" value={clipStart}
+                  onChange={(e) => { setClipStart(parseFloat(e.target.value)); seekTo(parseFloat(e.target.value)); }}
+                  className="flex-1 h-1.5 bg-cyan-500/20 rounded-full appearance-none cursor-pointer" />
+                <span className="text-white/50 font-mono w-12 text-right">{formatTime(clipStart)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-white/40 w-6">出</span>
+                <input type="range" min="0" max={previewDuration} step="0.1" value={clipEnd}
+                  onChange={(e) => { setClipEnd(parseFloat(e.target.value)); }}
+                  className="flex-1 h-1.5 bg-purple-500/20 rounded-full appearance-none cursor-pointer" />
+                <span className="text-white/50 font-mono w-12 text-right">{formatTime(clipEnd)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-white/25">截取时长: {formatTime(Math.max(0, clipEnd - clipStart))}</span>
+                <button onClick={() => { if(videoRef.current) { setClipStart(videoRef.current.currentTime); } }}
+                  className="text-[10px] text-cyan-400/60 px-2 py-0.5 rounded border border-cyan-500/20 hover:bg-cyan-500/10">
+                  当前为入点
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Thumbnail time picker */}
+          {activeTool === 'thumbnail' && previewDuration > 0 && (
+            <div className="px-4 py-3 bg-white/[0.02] border-t border-white/[0.06]">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-white/40">截图时间点</span>
+                <input type="range" min="0" max={previewDuration} step="0.1" value={currentTime}
+                  onChange={(e) => { seekTo(parseFloat(e.target.value)); setThumbTime(formatTime(parseFloat(e.target.value))); }}
+                  className="flex-1 h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer" />
+                <span className="text-white/50 font-mono">{formatTime(currentTime)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Step 3: Tool Options (non-preview tools) */}
+      {activeTool && !showPreview && (
+        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-3">
+          <p className="text-xs text-white/40">③ 配置参数</p>
+
           {activeTool === 'convert' && (
             <div className="flex items-center gap-3">
-              <span className="text-xs text-white/40 w-16">目标格式</span>
+              <span className="text-xs text-white/40">目标格式</span>
               <select value={convertFormat} onChange={(e) => setConvertFormat(e.target.value)}
                 className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
-                <option value="mp4">MP4</option>
-                <option value="mkv">MKV</option>
-                <option value="webm">WebM</option>
-                <option value="mov">MOV</option>
-                <option value="avi">AVI</option>
+                <option value="mp4">MP4</option><option value="mkv">MKV</option><option value="webm">WebM</option><option value="mov">MOV</option>
               </select>
             </div>
           )}
 
-          {/* Audio extract options */}
           {activeTool === 'audio_extract' && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <span className="text-xs text-white/40 w-16">格式</span>
+                <span className="text-xs text-white/40 w-12">格式</span>
                 <select value={audioFormat} onChange={(e) => setAudioFormat(e.target.value)}
                   className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
-                  <option value="mp3">MP3</option>
-                  <option value="m4a">M4A (AAC)</option>
-                  <option value="flac">FLAC (无损)</option>
-                  <option value="wav">WAV</option>
+                  <option value="mp3">MP3</option><option value="m4a">M4A</option><option value="flac">FLAC</option><option value="wav">WAV</option>
                 </select>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-white/40 w-16">质量</span>
+                <span className="text-xs text-white/40 w-12">码率</span>
                 <select value={audioQuality} onChange={(e) => setAudioQuality(e.target.value)}
                   className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
-                  <option value="128">128 kbps</option>
-                  <option value="192">192 kbps</option>
-                  <option value="256">256 kbps</option>
-                  <option value="320">320 kbps (最高)</option>
+                  <option value="128">128k</option><option value="192">192k</option><option value="256">256k</option><option value="320">320k</option>
                 </select>
               </div>
             </div>
           )}
 
-          {/* Thumbnail options */}
-          {activeTool === 'thumbnail' && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-white/40 w-16">截取时间</span>
-              <input type="text" value={thumbTime} onChange={(e) => setThumbTime(e.target.value)}
-                placeholder="00:00:01"
-                className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1" />
-            </div>
+          {activeTool === 'compress' && (
+            <select value={compressQuality} onChange={(e) => setCompressQuality(e.target.value)}
+              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none">
+              <option value="high">轻度 (画质优先)</option><option value="medium">中度 (均衡)</option><option value="low">重度 (体积优先)</option>
+            </select>
           )}
 
-          {/* Compress options */}
-          {activeTool === 'compress' && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-white/40 w-16">压缩度</span>
-              <select value={compressQuality} onChange={(e) => setCompressQuality(e.target.value)}
-                className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
-                <option value="high">轻度压缩 (画质优先)</option>
-                <option value="medium">中度压缩 (均衡)</option>
-                <option value="low">重度压缩 (体积优先)</option>
+          {activeTool === 'watermark_add' && (
+            <div className="space-y-2">
+              <input type="text" value={wmText} onChange={(e) => setWmText(e.target.value)} placeholder="水印文字"
+                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none" />
+              <select value={wmPosition} onChange={(e) => setWmPosition(e.target.value)}
+                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none">
+                <option value="bottomright">右下</option><option value="bottomleft">左下</option><option value="topright">右上</option><option value="center">居中</option>
               </select>
             </div>
           )}
 
-          {/* GIF options */}
-          {activeTool === 'gif' && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-white/40 w-16">起始时间</span>
-                <input type="text" value={gifStart} onChange={(e) => setGifStart(e.target.value)}
-                  placeholder="00:00:00"
-                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1" />
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-white/40 w-16">时长(秒)</span>
-                <input type="number" value={gifDuration} onChange={(e) => setGifDuration(e.target.value)}
-                  min="1" max="30" placeholder="5"
-                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1" />
-              </div>
-            </div>
+          {(activeTool === 'denoise' || activeTool === 'summary') && (
+            <p className="text-xs text-white/30">无需额外配置，点击处理即可</p>
           )}
-
-          {/* Watermark add options */}
-          {activeTool === 'watermark_add' && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-white/40 w-16">水印文字</span>
-                <input type="text" value={wmText} onChange={(e) => setWmText(e.target.value)}
-                  placeholder="输入水印文字"
-                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1" />
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-white/40 w-16">位置</span>
-                <select value={wmPosition} onChange={(e) => setWmPosition(e.target.value)}
-                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
-                  <option value="bottomright">右下角</option>
-                  <option value="bottomleft">左下角</option>
-                  <option value="topright">右上角</option>
-                  <option value="topleft">左上角</option>
-                  <option value="center">居中</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {/* Denoise - no options */}
-          {activeTool === 'denoise' && (
-            <p className="text-xs text-white/30">自动分析并去除背景噪音（保留人声）</p>
-          )}
-
-          {/* Summary - no options */}
-          {activeTool === 'summary' && (
-            <p className="text-xs text-white/30">自动提取视频元数据生成摘要信息</p>
-          )}
-
-          {/* AI tools notice */}
-          {(activeTool === 'subtitle' || activeTool === 'super_res' || activeTool === 'watermark') && (
-            <p className="text-xs text-white/30">AI 工具将自动处理选中的视频文件</p>
-          )}
-
-          {activeTool === 'merge' && (
-            <p className="text-xs text-white/30">视频拼接功能：请在下载历史中选择多个视频后使用</p>
-          )}
-
-          {/* Execute Button */}
-          <button
-            onClick={handleExecute}
-            disabled={processing || !selectedTask}
-            className="w-full py-3 bg-white text-gray-900 font-medium rounded-xl transition-all
-              hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {processing ? '处理中...' : '开始处理'}
-          </button>
         </div>
+      )}
+
+      {/* Execute Button */}
+      {activeTool && (
+        <button onClick={handleExecute} disabled={processing || !selectedTask}
+          className="w-full py-3 bg-white text-gray-900 font-medium rounded-xl hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-30">
+          {processing ? '处理中...' : '开始处理'}
+        </button>
       )}
 
       {/* Result */}
       {result && (
-        <div className="p-5 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 space-y-4">
-          <p className="text-sm text-emerald-300/80 font-medium">✓ {result.message}</p>
-
-          {/* Image/GIF preview for thumbnails and GIFs */}
+        <div className="p-4 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 space-y-3">
+          <p className="text-sm text-emerald-300/80">✓ {result.message}</p>
           {result.output_filename && result.output_filename.match(/\.(jpg|jpeg|png|webp|gif)$/i) && (
-            <div className="rounded-lg overflow-hidden border border-white/[0.08] bg-black/20">
-              <img
-                src={`/api/tools/preview/${encodeURIComponent(result.output_filename)}`}
-                alt="预览"
-                className="w-full max-h-[300px] object-contain"
-              />
-            </div>
+            <img src={`/api/tools/preview/${encodeURIComponent(result.output_filename)}`} alt="" className="rounded-lg max-h-[200px] object-contain" />
           )}
-
-          {/* Summary data display */}
           {result.summary && (
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(result.summary).map(([key, val]) => (
-                <div key={key} className="flex justify-between px-3 py-2 bg-white/[0.03] rounded-lg">
-                  <span className="text-xs text-white/40">{key}</span>
-                  <span className="text-xs text-white/70">{val}</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {Object.entries(result.summary).map(([k,v]) => (
+                <div key={k} className="flex justify-between px-2 py-1.5 bg-white/[0.03] rounded text-xs">
+                  <span className="text-white/40">{k}</span><span className="text-white/70">{v}</span>
                 </div>
               ))}
             </div>
           )}
-
-          {/* File info */}
-          <div className="flex items-center justify-between text-xs text-white/40">
-            <div className="space-y-1">
-              {result.output_filename && <p>文件: {result.output_filename.split('_').slice(-1)[0]}</p>}
-              {result.output_size > 0 && <p>大小: {(result.output_size / 1024 / 1024).toFixed(1)} MB</p>}
-              {result.compression_ratio && result.compression_ratio !== '0%' && <p>压缩: {result.compression_ratio}</p>}
-            </div>
-
-            {/* Download button */}
+          <div className="flex items-center justify-between">
+            {result.output_size > 0 && <span className="text-xs text-white/30">{(result.output_size/1024/1024).toFixed(1)} MB</span>}
+            {result.compression_ratio && <span className="text-xs text-white/30">压缩 {result.compression_ratio}</span>}
             {result.output_filename && (
-              <a
-                href={`/api/tools/download/${encodeURIComponent(result.output_filename)}`}
-                download
-                className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium rounded-xl
-                  hover:scale-[1.02] hover:shadow-lg transition-all active:scale-[0.98]"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
+              <a href={`/api/tools/download/${encodeURIComponent(result.output_filename)}`} download
+                className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-xl hover:scale-[1.02] transition-all">
                 下载文件
               </a>
             )}
@@ -365,14 +304,15 @@ function Toolbox() {
         </div>
       )}
 
-      {/* Error */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/[0.06] border border-red-500/20">
+        <div className="p-3 rounded-xl bg-red-500/[0.06] border border-red-500/20">
           <p className="text-sm text-red-300/80">{error}</p>
         </div>
       )}
     </div>
   );
 }
+
+function formatTime(s) { if(!s||isNaN(s)) return '00:00'; const m=Math.floor(s/60),sec=Math.floor(s%60); return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`; }
 
 export default Toolbox;
