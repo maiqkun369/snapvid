@@ -125,9 +125,57 @@ class DownloaderService:
         self._websockets: dict[str, WebSocket] = {}
         self._active_loops: dict[str, asyncio.AbstractEventLoop] = {}
         self._comments: dict[str, list] = {}  # task_id -> comments list
+        # Rebuild task list from existing files on disk
+        self._scan_existing_files()
 
     def get_downloads_dir(self) -> Path:
         return DOWNLOADS_DIR
+
+    def _scan_existing_files(self) -> None:
+        """Scan downloads directory on startup and rebuild task list from filenames."""
+        import re
+        if not DOWNLOADS_DIR.exists():
+            return
+        # Pattern: {uuid}_{title}.{ext}
+        uuid_pattern = re.compile(r'^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})_(.+)$')
+        seen_ids = set()
+        for f in sorted(DOWNLOADS_DIR.iterdir()):
+            if f.is_dir() or f.name.startswith('_') or f.name.startswith('concat_'):
+                continue
+            # Skip temp/partial files
+            if f.suffix in ('.part', '.ytdl', '.temp'):
+                continue
+            if '.part-Frag' in f.name:
+                continue
+            match = uuid_pattern.match(f.stem if f.suffix else f.name)
+            if not match:
+                # Try matching with extension included
+                name_with_ext = f.name
+                match = uuid_pattern.match(name_with_ext.rsplit('.', 1)[0] if '.' in name_with_ext else name_with_ext)
+            if match:
+                task_id = match.group(1)
+                title = match.group(2)
+                if task_id in seen_ids:
+                    continue
+                # Only register the main video/audio file (not thumbs, srt, etc)
+                if f.suffix.lower() in ('.mp4', '.mkv', '.webm', '.mov', '.avi', '.mp3', '.m4a', '.flac', '.wav', '.opus'):
+                    seen_ids.add(task_id)
+                    try:
+                        file_size = f.stat().st_size
+                    except OSError:
+                        file_size = 0
+                    self._tasks[task_id] = DownloadTask(
+                        id=task_id,
+                        url="",
+                        status=DownloadStatus.COMPLETED,
+                        progress=100.0,
+                        filename=f.name,
+                        title=title,
+                        filesize=file_size,
+                        created_at=str(f.stat().st_mtime),
+                        owner="15814439239",  # Default owner for recovered files
+                    )
+        logger.info(f"Recovered {len(seen_ids)} tasks from disk")
 
     # === Cookie Management ===
 

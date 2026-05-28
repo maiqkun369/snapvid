@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import FileResponse, StreamingResponse
 
 from api.schemas import (
     BatchDownloadRequest,
@@ -731,8 +731,8 @@ async def editor_export(task_id: str = "", edit_plan: str = "{}") -> dict:
 
 
 @router.get("/editor/stream/{task_id}")
-async def editor_stream_video(task_id: str):
-    """Stream video file for in-browser playback by task ID."""
+async def editor_stream_video(task_id: str, request: Request):
+    """Stream video file with Range support for in-browser playback."""
     task = downloader_service.get_task(task_id)
     if not task or not task.filename:
         raise HTTPException(status_code=404, detail="文件不存在")
@@ -740,8 +740,50 @@ async def editor_stream_video(task_id: str):
     file_path = downloads_dir / task.filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="文件不存在")
-    # Determine media type from extension
+
     ext = file_path.suffix.lower()
     mt = {".mp4": "video/mp4", ".webm": "video/webm", ".mkv": "video/x-matroska", ".mov": "video/quicktime"}
-    return FileResponse(path=str(file_path), media_type=mt.get(ext, "video/mp4"))
+    media_type = mt.get(ext, "video/mp4")
+    file_size = file_path.stat().st_size
+
+    # Handle Range request for video seeking
+    range_header = request.headers.get("range")
+    if range_header:
+        # Parse "bytes=start-end"
+        range_val = range_header.strip().split("=")[1]
+        range_parts = range_val.split("-")
+        start = int(range_parts[0])
+        end = int(range_parts[1]) if range_parts[1] else file_size - 1
+        end = min(end, file_size - 1)
+        chunk_size = end - start + 1
+
+        def iter_file():
+            with open(file_path, "rb") as f:
+                f.seek(start)
+                remaining = chunk_size
+                while remaining > 0:
+                    read_size = min(1024 * 1024, remaining)
+                    data = f.read(read_size)
+                    if not data:
+                        break
+                    remaining -= len(data)
+                    yield data
+
+        return StreamingResponse(
+            iter_file(),
+            status_code=206,
+            media_type=media_type,
+            headers={
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(chunk_size),
+            },
+        )
+
+    # Full file response with Accept-Ranges header
+    return FileResponse(
+        path=str(file_path),
+        media_type=media_type,
+        headers={"Accept-Ranges": "bytes"},
+    )
 
