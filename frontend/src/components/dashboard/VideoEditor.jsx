@@ -274,39 +274,70 @@ function VideoEditor() {
                 ) : (
                   <div className="space-y-2">
                     {projectClips.map((clip, idx) => (
-                      <div key={clip.id}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer ${
-                          activeClipIdx === idx ? 'bg-cyan-500/[0.08] border-cyan-500/30' : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
-                        }`}
-                        onClick={() => previewClip(clip, idx)}
-                      >
-                        {/* Reorder */}
-                        <div className="flex flex-col gap-0.5 text-white/20">
-                          <button onClick={(e) => { e.stopPropagation(); idx > 0 && moveClip(idx, idx-1); }} disabled={idx===0} className="hover:text-white/50 disabled:opacity-20 text-[10px]">▲</button>
-                          <button onClick={(e) => { e.stopPropagation(); idx < projectClips.length-1 && moveClip(idx, idx+1); }} disabled={idx===projectClips.length-1} className="hover:text-white/50 disabled:opacity-20 text-[10px]">▼</button>
-                        </div>
-
-                        {/* Clip # */}
-                        <span className="text-xs text-cyan-400/60 font-mono w-5">{idx+1}</span>
-
-                        {/* Visual bar */}
-                        <div className="flex-1 min-w-0">
-                          <div className="h-8 rounded-lg bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-white/[0.06] flex items-center px-2 gap-2">
-                            <span className="text-[10px] text-white/50 truncate flex-1">{clip.title}</span>
-                            <span className="text-[10px] text-white/30 font-mono shrink-0">{clip.start}→{clip.end}</span>
+                      <div key={clip.id} className="space-y-0">
+                        <div
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer ${
+                            activeClipIdx === idx ? 'bg-cyan-500/[0.08] border-cyan-500/30 rounded-b-none' : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                          }`}
+                          onClick={() => previewClip(clip, idx)}
+                        >
+                          {/* Reorder */}
+                          <div className="flex flex-col gap-0.5 text-white/20">
+                            <button onClick={(e) => { e.stopPropagation(); idx > 0 && moveClip(idx, idx-1); }} disabled={idx===0} className="hover:text-white/50 disabled:opacity-20 text-[10px]">▲</button>
+                            <button onClick={(e) => { e.stopPropagation(); idx < projectClips.length-1 && moveClip(idx, idx+1); }} disabled={idx===projectClips.length-1} className="hover:text-white/50 disabled:opacity-20 text-[10px]">▼</button>
                           </div>
+
+                          {/* Clip # */}
+                          <span className="text-xs text-cyan-400/60 font-mono w-5">{idx+1}</span>
+
+                          {/* Visual bar */}
+                          <div className="flex-1 min-w-0">
+                            <div className="h-8 rounded-lg bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-white/[0.06] flex items-center px-2 gap-2">
+                              <span className="text-[10px] text-white/50 truncate flex-1">{clip.title}</span>
+                              <span className="text-[10px] text-white/30 font-mono shrink-0">{clip.start}→{clip.end}</span>
+                            </div>
+                          </div>
+
+                          {/* Speed */}
+                          <select value={clip.speed} onClick={(e)=>e.stopPropagation()} onChange={(e) => updateClip(clip.id, 'speed', parseFloat(e.target.value))}
+                            className="bg-white/[0.05] border border-white/[0.08] rounded px-1.5 py-1 text-[10px] text-white/60 focus:outline-none w-14">
+                            <option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1">1x</option>
+                            <option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+                          </select>
+
+                          {/* Delete */}
+                          <button onClick={(e) => { e.stopPropagation(); removeClip(clip.id); }}
+                            className="text-white/20 hover:text-red-400 text-xs px-1.5 py-1 rounded hover:bg-red-500/10">×</button>
                         </div>
 
-                        {/* Speed */}
-                        <select value={clip.speed} onClick={(e)=>e.stopPropagation()} onChange={(e) => updateClip(clip.id, 'speed', parseFloat(e.target.value))}
-                          className="bg-white/[0.05] border border-white/[0.08] rounded px-1.5 py-1 text-[10px] text-white/60 focus:outline-none w-14">
-                          <option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1">1x</option>
-                          <option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
-                        </select>
-
-                        {/* Delete */}
-                        <button onClick={(e) => { e.stopPropagation(); removeClip(clip.id); }}
-                          className="text-white/20 hover:text-red-400 text-xs px-1.5 py-1 rounded hover:bg-red-500/10">×</button>
+                        {/* Expanded edit panel when selected */}
+                        {activeClipIdx === idx && (
+                          <div className="px-4 py-3 bg-cyan-500/[0.04] border border-t-0 border-cyan-500/20 rounded-b-xl space-y-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-white/40 w-12">起始</span>
+                              <input type="text" value={clip.start}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => updateClip(clip.id, 'start', e.target.value)}
+                                className="w-20 bg-white/[0.05] border border-white/[0.08] rounded px-2 py-1 text-xs text-white/70 font-mono focus:outline-none focus:border-cyan-500/40" />
+                              <span className="text-xs text-white/40 w-12">结束</span>
+                              <input type="text" value={clip.end}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => { updateClip(clip.id, 'end', e.target.value); updateClip(clip.id, 'duration', timeToSec(e.target.value) - timeToSec(clip.start)); }}
+                                className="w-20 bg-white/[0.05] border border-white/[0.08] rounded px-2 py-1 text-xs text-white/70 font-mono focus:outline-none focus:border-cyan-500/40" />
+                              <span className="text-xs text-white/25 ml-auto">时长: {formatTime(clip.duration || 0)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button onClick={(e) => { e.stopPropagation(); if(videoRef.current) updateClip(clip.id, 'start', formatTime(videoRef.current.currentTime)); }}
+                                className="text-[10px] text-cyan-400/60 px-2 py-1 rounded border border-cyan-500/20 hover:bg-cyan-500/10">
+                                设为当前时间(起始)
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); if(videoRef.current) { updateClip(clip.id, 'end', formatTime(videoRef.current.currentTime)); updateClip(clip.id, 'duration', videoRef.current.currentTime - timeToSec(clip.start)); } }}
+                                className="text-[10px] text-cyan-400/60 px-2 py-1 rounded border border-cyan-500/20 hover:bg-cyan-500/10">
+                                设为当前时间(结束)
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
