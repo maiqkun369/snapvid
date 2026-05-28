@@ -22,14 +22,18 @@ function Toolbox() {
   }, []);
 
   const tools = [
-    { id: 'convert', name: '格式转换', desc: '视频/音频无损转换格式', icon: '🔄', pro: false },
-    { id: 'audio_extract', name: '音频提取', desc: '从视频中提取纯音频', icon: '🎵', pro: false },
-    { id: 'thumbnail', name: '封面提取', desc: '截取视频画面为图片', icon: '🖼️', pro: false },
-    { id: 'compress', name: '视频压缩', desc: '减小体积，保持画质', icon: '📦', pro: true },
-    { id: 'subtitle', name: 'AI 字幕生成', desc: '语音识别自动生成字幕', icon: '📝', pro: true },
-    { id: 'super_res', name: 'AI 超分增强', desc: '提升分辨率至 2K/4K', icon: '✨', pro: true },
-    { id: 'watermark', name: 'AI 去水印', desc: '智能移除视频水印', icon: '🎨', pro: true },
-    { id: 'merge', name: '视频拼接', desc: '多个视频合并为一个', icon: '🔗', pro: true },
+    { id: 'convert', name: '格式转换', desc: '无损转换格式', icon: '🔄', pro: false },
+    { id: 'audio_extract', name: '音频提取', desc: '提取纯音频', icon: '🎵', pro: false },
+    { id: 'thumbnail', name: '封面提取', desc: '截取视频画面', icon: '🖼️', pro: false },
+    { id: 'gif', name: '视频转GIF', desc: '截取片段做动图', icon: '🎞️', pro: false },
+    { id: 'summary', name: '视频摘要', desc: '生成媒体信息', icon: '📋', pro: false },
+    { id: 'compress', name: '视频压缩', desc: '减小体积保画质', icon: '📦', pro: true },
+    { id: 'watermark_add', name: '添加水印', desc: '自定义文字水印', icon: '💧', pro: true },
+    { id: 'denoise', name: '音频降噪', desc: '去除背景噪音', icon: '🔇', pro: true },
+    { id: 'subtitle', name: 'AI 字幕', desc: '语音识别生成字幕', icon: '📝', pro: true },
+    { id: 'super_res', name: 'AI 超分', desc: '提升至2K/4K', icon: '✨', pro: true },
+    { id: 'watermark', name: 'AI 去水印', desc: '智能移除水印', icon: '🎨', pro: true },
+    { id: 'merge', name: '视频拼接', desc: '多视频合并', icon: '🔗', pro: true },
   ];
 
   // Tool-specific options
@@ -38,6 +42,11 @@ function Toolbox() {
   const [audioQuality, setAudioQuality] = useState('192');
   const [thumbTime, setThumbTime] = useState('00:00:01');
   const [compressQuality, setCompressQuality] = useState('medium');
+  // New tool options
+  const [gifStart, setGifStart] = useState('00:00:00');
+  const [gifDuration, setGifDuration] = useState('5');
+  const [wmText, setWmText] = useState('');
+  const [wmPosition, setWmPosition] = useState('bottomright');
 
   const handleExecute = async () => {
     if (!selectedTask || !activeTool) return;
@@ -61,6 +70,18 @@ function Toolbox() {
         break;
       case 'compress':
         url = `/api/tools/compress?${params}&quality=${compressQuality}`;
+        break;
+      case 'gif':
+        url = `/api/tools/gif?${params}&start=${gifStart}&duration=${gifDuration}&fps=15&width=480`;
+        break;
+      case 'watermark_add':
+        url = `/api/tools/watermark?${params}&text=${encodeURIComponent(wmText || 'SnapVid')}&position=${wmPosition}`;
+        break;
+      case 'denoise':
+        url = `/api/tools/denoise?${params}`;
+        break;
+      case 'summary':
+        url = `/api/tools/summary?${params}`;
         break;
       case 'subtitle':
         url = `/api/ai/subtitle?${params}&language=auto&format=srt`;
@@ -218,6 +239,57 @@ function Toolbox() {
             </div>
           )}
 
+          {/* GIF options */}
+          {activeTool === 'gif' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-white/40 w-16">起始时间</span>
+                <input type="text" value={gifStart} onChange={(e) => setGifStart(e.target.value)}
+                  placeholder="00:00:00"
+                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1" />
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-white/40 w-16">时长(秒)</span>
+                <input type="number" value={gifDuration} onChange={(e) => setGifDuration(e.target.value)}
+                  min="1" max="30" placeholder="5"
+                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1" />
+              </div>
+            </div>
+          )}
+
+          {/* Watermark add options */}
+          {activeTool === 'watermark_add' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-white/40 w-16">水印文字</span>
+                <input type="text" value={wmText} onChange={(e) => setWmText(e.target.value)}
+                  placeholder="输入水印文字"
+                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1" />
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-white/40 w-16">位置</span>
+                <select value={wmPosition} onChange={(e) => setWmPosition(e.target.value)}
+                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
+                  <option value="bottomright">右下角</option>
+                  <option value="bottomleft">左下角</option>
+                  <option value="topright">右上角</option>
+                  <option value="topleft">左上角</option>
+                  <option value="center">居中</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Denoise - no options */}
+          {activeTool === 'denoise' && (
+            <p className="text-xs text-white/30">自动分析并去除背景噪音（保留人声）</p>
+          )}
+
+          {/* Summary - no options */}
+          {activeTool === 'summary' && (
+            <p className="text-xs text-white/30">自动提取视频元数据生成摘要信息</p>
+          )}
+
           {/* AI tools notice */}
           {(activeTool === 'subtitle' || activeTool === 'super_res' || activeTool === 'watermark') && (
             <p className="text-xs text-white/30">AI 工具将自动处理选中的视频文件</p>
@@ -230,7 +302,7 @@ function Toolbox() {
           {/* Execute Button */}
           <button
             onClick={handleExecute}
-            disabled={processing || !selectedTask || activeTool === 'merge'}
+            disabled={processing || !selectedTask}
             className="w-full py-3 bg-white text-gray-900 font-medium rounded-xl transition-all
               hover:scale-[1.01] hover:shadow-lg active:scale-[0.99] disabled:opacity-30 disabled:cursor-not-allowed"
           >
@@ -244,14 +316,26 @@ function Toolbox() {
         <div className="p-5 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 space-y-4">
           <p className="text-sm text-emerald-300/80 font-medium">✓ {result.message}</p>
 
-          {/* Image preview for thumbnails */}
-          {result.output_filename && result.output_filename.match(/\.(jpg|jpeg|png|webp)$/i) && (
+          {/* Image/GIF preview for thumbnails and GIFs */}
+          {result.output_filename && result.output_filename.match(/\.(jpg|jpeg|png|webp|gif)$/i) && (
             <div className="rounded-lg overflow-hidden border border-white/[0.08] bg-black/20">
               <img
                 src={`/api/tools/preview/${encodeURIComponent(result.output_filename)}`}
                 alt="预览"
                 className="w-full max-h-[300px] object-contain"
               />
+            </div>
+          )}
+
+          {/* Summary data display */}
+          {result.summary && (
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(result.summary).map(([key, val]) => (
+                <div key={key} className="flex justify-between px-3 py-2 bg-white/[0.03] rounded-lg">
+                  <span className="text-xs text-white/40">{key}</span>
+                  <span className="text-xs text-white/70">{val}</span>
+                </div>
+              ))}
             </div>
           )}
 

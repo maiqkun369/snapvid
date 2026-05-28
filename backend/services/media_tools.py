@@ -243,3 +243,202 @@ class MediaToolsService:
             concat_file.unlink(missing_ok=True)
             self._jobs[job_id] = {"status": "failed", "error": str(e)}
             raise ValueError(f"视频拼接失败: {str(e)}")
+
+    async def video_to_gif(self, file_path: str, start: str = "00:00:00", duration: str = "5", fps: int = 15, width: int = 480) -> dict:
+        """Convert a video segment to GIF."""
+        path = Path(file_path)
+        if not path.exists():
+            raise ValueError("文件不存在")
+
+        job_id = str(uuid.uuid4())
+        output = path.parent / f"{path.stem}_clip.gif"
+
+        # Two-pass for quality: generate palette then apply
+        palette = path.parent / f"palette_{job_id}.png"
+        cmd_palette = [
+            "ffmpeg", "-y", "-ss", start, "-t", duration, "-i", str(path),
+            "-vf", f"fps={fps},scale={width}:-1:flags=lanczos,palettegen",
+            str(palette)
+        ]
+        cmd_gif = [
+            "ffmpeg", "-y", "-ss", start, "-t", duration, "-i", str(path), "-i", str(palette),
+            "-lavfi", f"fps={fps},scale={width}:-1:flags=lanczos[x];[x][1:v]paletteuse",
+            str(output)
+        ]
+
+        self._jobs[job_id] = {"status": "processing", "tool": "gif"}
+
+        try:
+            # Generate palette
+            await asyncio.get_event_loop().run_in_executor(
+                None, lambda: subprocess.run(cmd_palette, capture_output=True, text=True, timeout=60)
+            )
+            # Generate GIF
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: subprocess.run(cmd_gif, capture_output=True, text=True, timeout=120)
+            )
+            palette.unlink(missing_ok=True)
+
+            if result.returncode != 0 or not output.exists():
+                raise RuntimeError(result.stderr[-200:] if result.stderr else "GIF 生成失败")
+
+            self._jobs[job_id] = {"status": "completed"}
+            return {
+                "job_id": job_id,
+                "status": "completed",
+                "output_filename": output.name,
+                "output_size": output.stat().st_size,
+                "message": f"GIF 已生成 ({duration}秒, {fps}fps)",
+            }
+        except Exception as e:
+            palette.unlink(missing_ok=True)
+            self._jobs[job_id] = {"status": "failed", "error": str(e)}
+            raise ValueError(f"GIF 生成失败: {str(e)}")
+
+    async def add_watermark(self, file_path: str, text: str = "SnapVid", position: str = "bottomright") -> dict:
+        """Add text watermark to video."""
+        path = Path(file_path)
+        if not path.exists():
+            raise ValueError("文件不存在")
+
+        job_id = str(uuid.uuid4())
+        output = path.parent / f"{path.stem}_watermarked.mp4"
+
+        # Position mapping
+        pos_map = {
+            "topleft": "x=20:y=20",
+            "topright": "x=w-tw-20:y=20",
+            "bottomleft": "x=20:y=h-th-20",
+            "bottomright": "x=w-tw-20:y=h-th-20",
+            "center": "x=(w-tw)/2:y=(h-th)/2",
+        }
+        pos = pos_map.get(position, pos_map["bottomright"])
+
+        cmd = [
+            "ffmpeg", "-y", "-i", str(path),
+            "-vf", f"drawtext=text='{text}':fontsize=24:fontcolor=white@0.7:{pos}",
+            "-c:a", "copy", str(output)
+        ]
+
+        self._jobs[job_id] = {"status": "processing", "tool": "watermark"}
+
+        try:
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+            )
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr[-200:] if result.stderr else "水印添加失败")
+
+            self._jobs[job_id] = {"status": "completed"}
+            return {
+                "job_id": job_id,
+                "status": "completed",
+                "output_filename": output.name,
+                "output_size": output.stat().st_size,
+                "message": f"水印已添加: {text}",
+            }
+        except Exception as e:
+            self._jobs[job_id] = {"status": "failed", "error": str(e)}
+            raise ValueError(f"水印添加失败: {str(e)}")
+
+    async def denoise_audio(self, file_path: str) -> dict:
+        """Remove background noise from audio/video using FFmpeg highpass+lowpass filter."""
+        path = Path(file_path)
+        if not path.exists():
+            raise ValueError("文件不存在")
+
+        job_id = str(uuid.uuid4())
+        ext = path.suffix
+        output = path.parent / f"{path.stem}_denoised{ext}"
+
+        # Apply noise reduction: highpass filter removes low rumble, lowpass removes hiss
+        cmd = [
+            "ffmpeg", "-y", "-i", str(path),
+            "-af", "highpass=f=200,lowpass=f=3000,afftdn=nf=-25",
+            "-c:v", "copy", str(output)
+        ]
+
+        self._jobs[job_id] = {"status": "processing", "tool": "denoise"}
+
+        try:
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            )
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr[-200:] if result.stderr else "降噪失败")
+
+            self._jobs[job_id] = {"status": "completed"}
+            return {
+                "job_id": job_id,
+                "status": "completed",
+                "output_filename": output.name,
+                "output_size": output.stat().st_size,
+                "message": "音频降噪完成",
+            }
+        except Exception as e:
+            self._jobs[job_id] = {"status": "failed", "error": str(e)}
+            raise ValueError(f"音频降噪失败: {str(e)}")
+
+    async def video_summary(self, file_path: str) -> dict:
+        """Generate video summary by extracting key frames + audio transcript.
+        Uses ffmpeg for keyframe extraction. AI summary requires API config."""
+        path = Path(file_path)
+        if not path.exists():
+            raise ValueError("文件不存在")
+
+        job_id = str(uuid.uuid4())
+        self._jobs[job_id] = {"status": "processing", "tool": "summary"}
+
+        # Extract video duration and key info via ffprobe
+        probe_cmd = [
+            "ffprobe", "-v", "quiet", "-print_format", "json",
+            "-show_format", "-show_streams", str(path)
+        ]
+
+        try:
+            probe_result = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: subprocess.run(probe_cmd, capture_output=True, text=True, timeout=30)
+            )
+            import json
+            probe_data = json.loads(probe_result.stdout) if probe_result.returncode == 0 else {}
+            fmt = probe_data.get("format", {})
+
+            duration = float(fmt.get("duration", 0))
+            size = int(fmt.get("size", 0))
+            bitrate = int(fmt.get("bit_rate", 0))
+
+            # Extract video stream info
+            streams = probe_data.get("streams", [])
+            video_stream = next((s for s in streams if s.get("codec_type") == "video"), {})
+            audio_stream = next((s for s in streams if s.get("codec_type") == "audio"), {})
+
+            width = video_stream.get("width", 0)
+            height = video_stream.get("height", 0)
+            fps = eval(video_stream.get("r_frame_rate", "0/1")) if video_stream.get("r_frame_rate") else 0
+            codec = video_stream.get("codec_name", "unknown")
+
+            mins = int(duration) // 60
+            secs = int(duration) % 60
+
+            summary = {
+                "duration": f"{mins}分{secs}秒",
+                "resolution": f"{width}x{height}" if width else "未知",
+                "fps": f"{fps:.0f}" if fps else "未知",
+                "codec": codec,
+                "filesize": f"{size / 1024 / 1024:.1f} MB",
+                "bitrate": f"{bitrate / 1000:.0f} kbps" if bitrate else "未知",
+                "audio_codec": audio_stream.get("codec_name", "无音频"),
+                "audio_channels": audio_stream.get("channels", 0),
+            }
+
+            self._jobs[job_id] = {"status": "completed"}
+            return {
+                "job_id": job_id,
+                "status": "completed",
+                "summary": summary,
+                "message": "视频摘要已生成",
+                "note": "AI 文字摘要需配置 AI API（当前为媒体信息摘要）",
+            }
+        except Exception as e:
+            self._jobs[job_id] = {"status": "failed", "error": str(e)}
+            raise ValueError(f"摘要生成失败: {str(e)}")

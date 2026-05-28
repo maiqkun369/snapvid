@@ -556,8 +556,60 @@ async def tools_preview_file(filename: str):
         raise HTTPException(status_code=404, detail="文件不存在")
     # Determine media type
     ext = file_path.suffix.lower()
-    media_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    media_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}
     media_type = media_types.get(ext, "application/octet-stream")
     return FileResponse(path=str(file_path), media_type=media_type)
+
+
+@router.post("/tools/gif")
+async def tools_video_to_gif(task_id: str = "", start: str = "00:00:00", duration: str = "5", fps: int = 15, width: int = 480) -> dict:
+    """Convert video segment to GIF."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await media_tools_service.video_to_gif(file_path, start, duration, fps, width)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tools/watermark")
+async def tools_add_watermark(task_id: str = "", text: str = "SnapVid", position: str = "bottomright") -> dict:
+    """Add text watermark to video."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await media_tools_service.add_watermark(file_path, text, position)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tools/denoise")
+async def tools_denoise_audio(task_id: str = "") -> dict:
+    """Remove background noise from audio."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await media_tools_service.denoise_audio(file_path)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tools/summary")
+async def tools_video_summary(task_id: str = "") -> dict:
+    """Generate video summary/info."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await media_tools_service.video_summary(file_path)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
