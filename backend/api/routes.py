@@ -28,11 +28,16 @@ from services.downloader import DownloaderService
 from services.auth import AuthService
 from services.cloud_sync import CloudSyncService
 from services.ai_tools import AIToolsService
+from services.media_tools import MediaToolsService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 downloader_service = DownloaderService()
+auth_service = AuthService()
+cloud_sync_service = CloudSyncService()
+ai_tools_service = AIToolsService()
+media_tools_service = MediaToolsService()
 auth_service = AuthService()
 cloud_sync_service = CloudSyncService()
 ai_tools_service = AIToolsService()
@@ -452,3 +457,78 @@ async def websocket_progress(websocket: WebSocket, task_id: str) -> None:
         logger.error(f"WebSocket error for task {task_id}: {e}")
     finally:
         downloader_service.unsubscribe_progress(task_id)
+
+
+# === Media Tools Endpoints (FFmpeg-based) ===
+
+@router.post("/tools/convert")
+async def tools_convert(task_id: str = "", target_format: str = "mp4") -> dict:
+    """Convert video/audio format."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await media_tools_service.convert_format(file_path, target_format)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tools/audio-extract")
+async def tools_audio_extract(task_id: str = "", audio_format: str = "mp3", quality: str = "192") -> dict:
+    """Extract audio from video."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await media_tools_service.extract_audio(file_path, audio_format, quality)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tools/thumbnail")
+async def tools_thumbnail(task_id: str = "", time_pos: str = "00:00:01") -> dict:
+    """Extract video thumbnail/cover."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await media_tools_service.extract_thumbnail(file_path, time_pos)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tools/compress")
+async def tools_compress(task_id: str = "", quality: str = "medium") -> dict:
+    """Compress video (reduce file size)."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    crf_map = {"low": 32, "medium": 28, "high": 23}
+    crf = crf_map.get(quality, 28)
+    try:
+        return await media_tools_service.compress_video(file_path, crf=crf)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/tools/merge")
+async def tools_merge(task_ids: str = "") -> dict:
+    """Merge multiple videos into one. Pass comma-separated task IDs."""
+    if not task_ids:
+        raise HTTPException(status_code=400, detail="请提供要合并的视频任务ID")
+    ids = [tid.strip() for tid in task_ids.split(",") if tid.strip()]
+    file_paths = []
+    for tid in ids:
+        task = downloader_service.get_task(tid)
+        if not task or not task.filename:
+            raise HTTPException(status_code=404, detail=f"任务 {tid} 不存在或未完成")
+        file_paths.append(str(downloader_service.get_downloads_dir() / task.filename))
+    try:
+        return await media_tools_service.merge_videos(file_paths)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
