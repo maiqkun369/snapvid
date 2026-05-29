@@ -142,9 +142,11 @@
   .card-gradient-2:hover { transform: rotate(0deg) translateY(-4px); }
 }
 
-/* === Hero Gradient Background (pink → yellow) === */
+/* === Hero Gradient Background (animated like Wero) === */
 .gradient-hero {
-  background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 25%, #FFF48D 80%, #FFF9C4 100%);
+  background: linear-gradient(121deg, #ff158a -20.66%, #fff48d 65.83%);
+  background-size: 120% 120%;
+  animation: gradientShift 10s ease infinite;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -154,15 +156,37 @@
   overflow: hidden;
 }
 
-/* === Super Bold Display Title === */
+@keyframes gradientShift {
+  0% { background-position: 50% 50%; }
+  25% { background-position: 0% 0%; }
+  50% { background-position: 50% 50%; }
+  75% { background-position: 100% 100%; }
+  100% { background-position: 50% 50%; }
+}
+
+/* === Super Bold Display Title (exact Wero params) === */
 .display-title {
-  font-weight: 900;
-  font-size: clamp(3.5rem, 12vw, 9rem);
-  line-height: 0.85;
-  letter-spacing: -4px;
-  text-transform: uppercase;
+  font-weight: 800;
+  font-size: clamp(4.875rem, 11.78vw + 2.11rem, 16.25rem);
+  letter-spacing: clamp(-0.23rem, -0.55vw - 0.1rem, -0.76rem);
+  line-height: 85%;
   text-align: center;
+  text-transform: uppercase;
   color: var(--color-text);
+}
+
+.display-title span {
+  display: block;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: titleReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.display-title span:nth-child(2) { animation-delay: 0.15s; }
+.display-title span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes titleReveal {
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* === Entrance Animations === */
@@ -193,32 +217,34 @@
   50% { transform: translateY(-12px) rotate(3deg); }
 }
 
-/* === Bottom Floating Nav Bar (Wero style) === */
+/* === Bottom Floating Nav Bar (exact Wero style) === */
 .bottom-nav {
   position: fixed;
-  bottom: 28px;
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 8px;
   background: var(--color-surface);
-  border: 2px solid var(--color-text);
-  border-radius: var(--radius-full);
-  padding: 6px 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border: 1px solid var(--color-text);
+  border-radius: 30px;
+  box-shadow: 0 4px 0 0 var(--color-text);
+  padding: 4px;
 }
 
 .bottom-nav a, .bottom-nav button {
-  padding: 10px 18px;
-  border-radius: var(--radius-full);
+  padding: 12px 20px;
+  border-radius: 26px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text);
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .bottom-nav a:hover, .bottom-nav button:hover {
@@ -226,8 +252,8 @@
 }
 
 .bottom-nav a.active, .bottom-nav button.active {
-  background: var(--color-text);
-  color: white;
+  background: var(--color-highlight);
+  border: 1px solid var(--color-text);
 }
 
 /* === Scroll-triggered fade (CSS-only with scroll margin) === */
