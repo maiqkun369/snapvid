@@ -494,6 +494,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('snapvid_token');
     setUser(null);
+    window.location.hash = '#/';
   };
 
   return (
@@ -972,7 +973,7 @@ function App() {
       </section>
 
       {/* === BOTTOM FLOATING NAV (Wero style, GSAP entrance) === */}
-      <nav className="bottom-nav" style={{ opacity: 0 }}>
+      <nav className="bottom-nav">
         <a href="#features" className="active">下载</a>
         {user && <a href="#/dashboard">控制台</a>}
         {!user && <button onClick={() => setShowAuth(true)}>登录</button>}
