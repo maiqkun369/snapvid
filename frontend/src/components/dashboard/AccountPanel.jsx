@@ -16,82 +16,78 @@ function AccountPanel() {
     fetchStats();
   }, []);
 
-  if (loading) return <div className="text-center py-12 text-white/30">加载中...</div>;
+  if (loading) return <div className="text-center py-12 text-[#4A4A4A] font-medium">加载中...</div>;
 
   const isPro = stats?.plan === 'pro';
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-white/80">我的账户</h2>
+      <h2 className="text-2xl font-extrabold text-[#1D1C1C]">我的账户</h2>
 
-      {/* Plan Card — Glass with gradient accent */}
-      <div className={`glass rounded-[24px] p-6 ${isPro ? 'border-violet-500/20 bg-violet-500/[0.04]' : ''}`}>
+      {/* Plan Card */}
+      <div className={`p-6 rounded-lg border border-[#1D1C1C] ${isPro ? 'bg-[#FFF48D]' : 'bg-white'}`}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm text-white/40">当前方案</p>
-            <p className="text-2xl font-semibold text-white/90 mt-1">
+            <p className="text-sm font-medium text-[#4A4A4A]">当前方案</p>
+            <p className="text-2xl font-extrabold text-[#1D1C1C] mt-1">
               {isPro ? 'Pro 会员' : '免费版'}
             </p>
           </div>
-          {isPro && (
-            <span className="text-3xl">👑</span>
-          )}
         </div>
         {!isPro && (
-          <button className="w-full mt-3 py-3.5 rounded-2xl text-sm font-semibold text-white
-            bg-gradient-to-r from-violet-500 to-cyan-500
-            hover:opacity-90 transition-all active:scale-[0.98]">
-            升级 Pro · ¥29/月
+          <button className="w-full mt-3 py-3.5 rounded-full text-sm font-bold text-white
+            bg-[#1D1C1C] hover:bg-[#333] transition-all active:scale-[0.97]">
+            升级 Pro
           </button>
         )}
       </div>
 
-      {/* Stats Grid — Glass cards */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="glass rounded-2xl p-4 text-center">
-          <p className="text-2xl font-semibold text-white/80">{stats?.downloads_today || 0}</p>
-          <p className="text-xs text-white/30 mt-1">今日下载</p>
+        <div className="bg-white border border-[#1D1C1C] rounded-lg p-4 text-center">
+          <p className="text-2xl font-extrabold text-[#1D1C1C]">{stats?.downloads_today || 0}</p>
+          <p className="text-sm font-medium text-[#4A4A4A] mt-1">今日下载</p>
         </div>
-        <div className="glass rounded-2xl p-4 text-center">
-          <p className="text-2xl font-semibold text-white/80">{stats?.downloads_total || 0}</p>
-          <p className="text-xs text-white/30 mt-1">总下载量</p>
+        <div className="bg-white border border-[#1D1C1C] rounded-lg p-4 text-center">
+          <p className="text-2xl font-extrabold text-[#1D1C1C]">{stats?.downloads_total || 0}</p>
+          <p className="text-sm font-medium text-[#4A4A4A] mt-1">总下载量</p>
         </div>
-        <div className="glass rounded-2xl p-4 text-center">
-          <p className="text-2xl font-semibold text-white/80">
-            {isPro ? '∞' : `${stats?.daily_remaining || 0}/${stats?.daily_limit || 3}`}
+        <div className="bg-white border border-[#1D1C1C] rounded-lg p-4 text-center">
+          <p className="text-2xl font-extrabold text-[#1D1C1C]">
+            {isPro ? '无限' : `${stats?.daily_remaining || 0}/${stats?.daily_limit || 3}`}
           </p>
-          <p className="text-xs text-white/30 mt-1">今日配额</p>
+          <p className="text-sm font-medium text-[#4A4A4A] mt-1">今日配额</p>
         </div>
-        <div className="glass rounded-2xl p-4 text-center">
-          <p className="text-2xl font-semibold text-white/80">{stats?.max_resolution || '1080p'}</p>
-          <p className="text-xs text-white/30 mt-1">最高画质</p>
+        <div className="bg-white border border-[#1D1C1C] rounded-lg p-4 text-center">
+          <p className="text-2xl font-extrabold text-[#1D1C1C]">{stats?.max_resolution || '1080p'}</p>
+          <p className="text-sm font-medium text-[#4A4A4A] mt-1">最高画质</p>
         </div>
       </div>
 
-      {/* Account Info — Glass card */}
-      <div className="glass rounded-2xl p-5 space-y-3.5">
+      {/* Account Info */}
+      <div className="bg-white border border-[#1D1C1C] rounded-lg p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-white/40">手机号</span>
-          <span className="text-sm text-white/60">{stats?.phone || '--'}</span>
+          <span className="text-sm font-medium text-[#4A4A4A]">手机号</span>
+          <span className="text-sm font-bold text-[#1D1C1C]">{stats?.phone || '--'}</span>
         </div>
-        <div className="h-[1px] bg-white/[0.04]" />
+        <div className="h-[1px] bg-gray-200" />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-white/40">注册时间</span>
-          <span className="text-sm text-white/60">{stats?.member_since?.split('T')[0] || '--'}</span>
+          <span className="text-sm font-medium text-[#4A4A4A]">注册时间</span>
+          <span className="text-sm font-bold text-[#1D1C1C]">{stats?.member_since?.split('T')[0] || '--'}</span>
         </div>
-        <div className="h-[1px] bg-white/[0.04]" />
+        <div className="h-[1px] bg-gray-200" />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-white/40">会员等级</span>
-          <span className={`text-sm ${isPro ? 'text-violet-300' : 'text-white/60'}`}>
+          <span className="text-sm font-medium text-[#4A4A4A]">会员等级</span>
+          <span className={`text-sm font-bold ${isPro ? 'text-[#CC0066]' : 'text-[#1D1C1C]'}`}>
             {isPro ? 'Pro' : 'Free'}
           </span>
         </div>
       </div>
 
-      {/* Invite Section — Glass card */}
-      <div className="glass rounded-2xl p-5 space-y-4">
-        <h3 className="text-sm text-white/60 font-medium">邀请好友</h3>
-        <p className="text-xs text-white/30">邀请好友注册，双方各得 7 天 Pro 会员</p>
+      {/* Invite Section */}
+      <div className="bg-white border border-[#1D1C1C] rounded-lg p-5 space-y-4">
+        <h3 className="text-base font-bold text-[#1D1C1C]">邀请好友</h3>
+        <p className="text-sm text-[#4A4A4A]">邀请好友注册，双方各得 7 天 Pro 会员</p>
         <InviteSection />
       </div>
     </div>
@@ -127,30 +123,30 @@ function InviteSection() {
     <div className="space-y-3">
       {code && (
         <div className="flex items-center gap-3">
-          <code className="flex-1 px-4 py-2.5 bg-white/[0.05] rounded-xl text-sm text-cyan-300 font-mono
-            border border-white/[0.06]">{code}</code>
+          <code className="flex-1 px-4 py-2.5 bg-[#FFF48D] rounded-full text-sm text-[#1D1C1C] font-bold font-mono
+            border border-[#1D1C1C]">{code}</code>
           <button onClick={() => { navigator.clipboard.writeText(code); setMessage('已复制'); }}
-            className="btn-secondary text-xs px-3 py-2">
+            className="px-4 py-2.5 rounded-full border border-[#1D1C1C] text-sm font-bold text-[#1D1C1C] hover:bg-gray-100 transition-all">
             复制
           </button>
         </div>
       )}
       {stats && (
-        <p className="text-xs text-white/30">
+        <p className="text-sm text-[#4A4A4A] font-medium">
           已邀请 {stats.successful_invites} 人 · 累计获得 {stats.earned_days} 天 Pro
         </p>
       )}
       <div className="flex items-center gap-2">
         <input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value)}
           placeholder="输入好友邀请码"
-          className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm
-            text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
+          className="flex-1 border border-[#1D1C1C] rounded-full px-4 py-2.5 text-sm font-medium
+            text-[#1D1C1C] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FFF48D]" />
         <button onClick={handleUseCode} disabled={!inputCode}
-          className="btn-primary text-xs px-4 py-2.5 disabled:opacity-30">
+          className="px-5 py-2.5 rounded-full bg-[#1D1C1C] text-white text-sm font-bold disabled:opacity-30 hover:bg-[#333] transition-all">
           使用
         </button>
       </div>
-      {message && <p className="text-xs text-emerald-400/70">{message}</p>}
+      {message && <p className="text-sm font-bold text-[#83f582]">{message}</p>}
     </div>
   );
 }

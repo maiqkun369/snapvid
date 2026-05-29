@@ -41,50 +41,51 @@ function SchedulePanel() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-white/80 mb-2">定时下载</h2>
-        <p className="text-sm text-white/40">设定时间自动下载，适合大文件避开高峰期</p>
+        <h2 className="text-2xl font-extrabold text-[#1D1C1C] mb-2">定时下载</h2>
+        <p className="text-sm font-medium text-[#4A4A4A]">设定时间自动下载，适合大文件避开高峰期</p>
       </div>
 
-      {/* Add new schedule — Glass card */}
-      <div className="glass rounded-2xl p-5 space-y-3">
+      {/* Add new schedule */}
+      <div className="bg-white border border-[#1D1C1C] rounded-lg p-5 space-y-3">
         <input type="text" value={url} onChange={(e) => setUrl(e.target.value)}
           placeholder="视频链接"
-          className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-            text-white/70 focus:outline-none focus:border-white/[0.2] transition-all placeholder-white/25" />
+          className="w-full border border-[#1D1C1C] rounded-full px-5 py-3 text-sm font-medium
+            text-[#1D1C1C] focus:outline-none focus:ring-2 focus:ring-[#FFF48D] placeholder-gray-400" />
         <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)}
-          className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-            text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
+          className="w-full border border-[#1D1C1C] rounded-full px-5 py-3 text-sm font-medium
+            text-[#1D1C1C] focus:outline-none focus:ring-2 focus:ring-[#FFF48D]" />
         <button onClick={handleAdd} disabled={!url || !scheduledAt}
-          className="btn-primary w-full text-sm py-3">
+          className="w-full py-3 rounded-full bg-[#1D1C1C] text-white text-sm font-bold
+            hover:bg-[#333] transition-all active:scale-[0.97] disabled:opacity-30">
           添加定时任务
         </button>
-        {message && <p className="text-xs text-emerald-400/70">{message}</p>}
+        {message && <p className="text-sm font-bold text-[#83f582]">{message}</p>}
       </div>
 
       {/* Schedule list */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         {schedules.length === 0 ? (
-          <p className="text-sm text-white/25 text-center py-10">暂无定时任务</p>
+          <p className="text-base font-medium text-[#4A4A4A] text-center py-10">暂无定时任务</p>
         ) : (
           schedules.map((s) => (
-            <div key={s.id} className="flex items-center justify-between px-5 py-4 glass rounded-2xl">
+            <div key={s.id} className="flex items-center justify-between px-5 py-4 bg-white border border-[#1D1C1C] rounded-lg">
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-white/60 truncate">{s.url}</p>
+                <p className="text-sm font-bold text-[#1D1C1C] truncate">{s.url}</p>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className={`text-xs px-2.5 py-0.5 rounded-lg ${
-                    s.status === 'pending' ? 'bg-amber-500/10 text-amber-400/70 border border-amber-500/10' :
-                    s.status === 'executed' ? 'bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/10' :
-                    'bg-white/[0.05] text-white/30 border border-white/[0.05]'
+                  <span className={`text-xs px-3 py-1 rounded-full font-bold border border-[#1D1C1C] ${
+                    s.status === 'pending' ? 'bg-[#FFF48D] text-[#1D1C1C]' :
+                    s.status === 'executed' ? 'bg-[#83f582] text-[#1D1C1C]' :
+                    'bg-gray-100 text-[#4A4A4A]'
                   }`}>
                     {s.status === 'pending' ? '等待中' : s.status === 'executed' ? '已执行' : '已取消'}
                   </span>
-                  <span className="text-xs text-white/25">{s.scheduled_at?.replace('T', ' ')?.slice(0, 16)}</span>
+                  <span className="text-xs font-medium text-[#4A4A4A]">{s.scheduled_at?.replace('T', ' ')?.slice(0, 16)}</span>
                 </div>
               </div>
               {s.status === 'pending' && (
                 <button onClick={() => handleCancel(s.id)}
-                  className="text-xs text-white/25 hover:text-red-400 px-3 py-1.5 rounded-xl
-                    hover:bg-red-500/10 transition-all ml-2">
+                  className="text-sm font-bold text-[#4A4A4A] hover:text-[#CC0066] px-3 py-1.5 rounded-full
+                    hover:bg-red-50 transition-all ml-2">
                   取消
                 </button>
               )}
