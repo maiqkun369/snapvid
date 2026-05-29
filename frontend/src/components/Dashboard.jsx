@@ -17,91 +17,77 @@ function Dashboard({ user, onLogout, onNewDownload }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0f0f11] text-white flex flex-col">
-      {/* Animated Background (subtle for dashboard) */}
-      <div className="animated-bg opacity-50" />
-
-      {/* Dashboard Header — Glass */}
-      <header className="relative z-40 px-6 py-4">
-        <div className="flex items-center justify-between glass-strong rounded-2xl px-6 py-3.5">
-          <div className="flex items-center gap-4">
-            <a href="#/" className="text-lg font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
-              SnapVid
-            </a>
-            <div className="w-[1px] h-4 bg-white/10" />
-            <span className="text-sm text-white/40 font-medium">控制台</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onNewDownload}
-              className="text-sm text-white font-medium
-                bg-gradient-to-r from-violet-500/20 to-cyan-500/20
-                border border-violet-400/25 px-4 py-2 rounded-xl
-                hover:from-violet-500/30 hover:to-cyan-500/30 hover:border-violet-400/40
-                transition-all duration-300 active:scale-[0.97]"
-            >
-              + 新建下载
-            </button>
-            <span className="text-sm text-white/40">{user?.phone || '用户'}</span>
-            {user?.plan === 'pro' && (
-              <span className="text-xs px-2.5 py-1 rounded-lg font-medium
-                bg-gradient-to-r from-violet-500/20 to-cyan-500/20 border border-violet-400/20
-                text-violet-300">PRO</span>
-            )}
-            <button onClick={onLogout} className="text-sm text-white/30 hover:text-white/60 transition-colors">退出</button>
-          </div>
+    <div className="min-h-screen bg-[#FAFAF9] text-[#1D1C1C] flex flex-col">
+      {/* Dashboard Header */}
+      <header className="px-6 py-4 bg-white border-b-2 border-[#1D1C1C] flex items-center justify-between z-40 sticky top-0">
+        <div className="flex items-center gap-4">
+          <a href="#/" className="text-lg font-extrabold text-[#1D1C1C] tracking-tight hover:text-[#CC0066] transition-colors">
+            SnapVid
+          </a>
+          <span className="text-sm font-bold text-[#6B6B6B]">/ 控制台</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onNewDownload}
+            className="btn-accent text-sm py-2.5 px-5"
+          >
+            + 新建下载
+          </button>
+          {user?.plan === 'pro' && (
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FFF48D] border-2 border-[#1D1C1C]">
+              PRO
+            </span>
+          )}
+          <button onClick={onLogout} className="text-sm text-[#6B6B6B] hover:text-[#1D1C1C] font-semibold transition-colors">
+            退出
+          </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden relative z-10">
-        {/* Sidebar — Glass */}
-        <aside className="w-56 flex-shrink-0 hidden sm:block p-4 pr-0">
-          <nav className="glass rounded-2xl p-3 space-y-1 h-full">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-60 border-r-2 border-[#E8E8E8] bg-white py-6 flex-shrink-0 hidden sm:block">
+          <nav className="space-y-1 px-4">
             {panels.map((panel) => (
               <button
                 key={panel.id}
                 onClick={() => setActivePanel(panel.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 relative ${
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 ${
                   activePanel === panel.id
-                    ? 'bg-white/[0.08] text-white font-medium'
-                    : 'text-white/50 hover:bg-white/[0.04] hover:text-white/70'
+                    ? 'bg-[#FFF48D] border-2 border-[#1D1C1C] text-[#1D1C1C]'
+                    : 'text-[#6B6B6B] hover:bg-gray-50 hover:text-[#1D1C1C] border-2 border-transparent'
                 }`}
               >
-                {/* Active indicator — gradient left bar */}
-                {activePanel === panel.id && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full
-                    bg-gradient-to-b from-violet-400 to-cyan-400" />
-                )}
-                <span className="text-base">{panel.icon}</span>
+                <span className="text-lg">{panel.icon}</span>
                 {panel.label}
               </button>
             ))}
           </nav>
         </aside>
 
-        {/* Mobile tab bar — Glass */}
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 p-3">
-          <div className="flex justify-around py-2.5 glass-strong rounded-2xl">
+        {/* Mobile tab bar */}
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[#1D1C1C] z-40">
+          <div className="flex justify-around py-2">
             {panels.map((panel) => (
               <button
                 key={panel.id}
                 onClick={() => setActivePanel(panel.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl ${
                   activePanel === panel.id
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/40'
+                    ? 'text-[#1D1C1C] bg-[#FFF48D]'
+                    : 'text-[#6B6B6B]'
                 }`}
               >
                 <span className="text-lg">{panel.icon}</span>
-                <span className="text-[10px]">{panel.label}</span>
+                <span className="text-[10px] font-bold">{panel.label}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6 pb-24 sm:pb-6">
-          <div className="max-w-4xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-8 pb-24 sm:pb-8">
+          <div className="max-w-5xl mx-auto">
             {activePanel === 'tasks' && <TaskCenter />}
             {activePanel === 'history' && <HistoryPanel />}
             {activePanel === 'tools' && <Toolbox />}
