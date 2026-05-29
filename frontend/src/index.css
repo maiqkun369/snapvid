@@ -15,6 +15,19 @@
   --radius-md: 16px;
 }
 
+/* ===== Lenis Smooth Scroll Base ===== */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
 @layer base {
   body {
     @apply antialiased;
@@ -23,8 +36,23 @@
     font-size: 16px;
     line-height: 1.5;
     color: var(--color-text);
-    background: #FAFAF9;
+    background: #FFF48D;
+    overflow-x: hidden;
   }
+}
+
+/* ===== Scroll Progress Bar (exact Wero) ===== */
+.scroll-progress {
+  background-color: #1d1c1c;
+  height: 4px;
+  left: 0;
+  position: fixed;
+  top: 0;
+  transform: scaleX(0);
+  transform-origin: center left;
+  width: 100%;
+  z-index: 1200;
+  pointer-events: none;
 }
 
 @layer components {
@@ -118,14 +146,13 @@
     box-shadow: 0 10px 0 0 var(--color-text);
   }
 
-  /* Gradient cards (Wero style tilted) */
+  /* Gradient cards (Wero style) */
   .card-gradient-1 {
     background: linear-gradient(73deg, #7af7f7 10%, #83f582 91%);
     border: 2px solid var(--color-text);
     border-radius: 5px;
     box-shadow: 0 8px 0 0 var(--color-text);
-    transform: rotate(3deg);
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .card-gradient-2 {
@@ -133,12 +160,11 @@
     border: 2px solid var(--color-text);
     border-radius: 5px;
     box-shadow: 0 8px 0 0 var(--color-text);
-    transform: rotate(-2deg);
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .card-gradient-1:hover { transform: rotate(0deg) translateY(-4px); }
-  .card-gradient-2:hover { transform: rotate(0deg) translateY(-4px); }
+  .card-gradient-1:hover { transform: translateY(-4px); box-shadow: 0 12px 0 0 var(--color-text); }
+  .card-gradient-2:hover { transform: translateY(-4px); box-shadow: 0 12px 0 0 var(--color-text); }
 
   /* Tool controls in dashboard */
   .tool-select {
@@ -152,18 +178,43 @@
   }
 }
 
-/* === Hero Gradient Background (animated, exact Wero params) === */
+/* ===== Scroll-shrink wrapper (Wero style) ===== */
+.scroll-wrapper {
+  background: #FFF48D;
+  min-height: 100vh;
+}
+
+/* ===== Hero Gradient Background (animated, exact Wero params) ===== */
 .gradient-hero {
   background: linear-gradient(121deg, #ff158a -20.66%, #fff48d 65.83%);
   background-size: 120% 120%;
   animation: gradient 10s ease infinite;
-  min-height: 100svh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  will-change: transform;
+  transform-origin: center center;
+}
+
+/* Sticky hero behavior for scroll-shrink */
+.hero-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Content section that scrolls over the hero */
+.content-over-hero {
+  position: relative;
+  z-index: 2;
+  background: #FAFAF9;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  min-height: 100vh;
 }
 
 @keyframes gradient {
@@ -174,7 +225,7 @@
   100% { background-position: 50% 50%; }
 }
 
-/* === Super Bold Display Title (exact Wero params) === */
+/* ===== Display Title (GSAP-ready: initial state set by GSAP, not CSS keyframes) ===== */
 .display-title {
   font-weight: 800;
   font-size: clamp(4.875rem, 11.78vw + 2.11rem, 16.25rem);
@@ -185,45 +236,14 @@
   color: var(--color-text);
 }
 
-/* Title lines reveal animation — translateY(30px) to 0 */
+/* Title spans: initial hidden state (GSAP handles reveal) */
 .display-title span {
   display: block;
   opacity: 0;
   transform: translateY(30px);
-  animation: titleReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.display-title span:nth-child(2) { animation-delay: 0.15s; }
-.display-title span:nth-child(3) { animation-delay: 0.3s; }
-
-@keyframes titleReveal {
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* === Entrance Animations === */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* === Bottom Floating Nav Bar (exact Wero style) === */
+/* ===== Bottom Floating Nav Bar (exact Wero style) ===== */
 .bottom-nav {
   position: fixed;
   bottom: 30px;
@@ -262,19 +282,31 @@
   border: 1px solid var(--color-text);
 }
 
-/* === Scroll-triggered reveal (exact Wero CSS) === */
+/* ===== GSAP Scroll-triggered reveal (replaces old IntersectionObserver) ===== */
+.gsap-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+/* Legacy .reveal class (still used in some places, now GSAP-driven) */
 .reveal {
   opacity: 0;
   transform: translateY(30px);
-  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* === Step indicator circles === */
+/* ===== Platform Tags (GSAP stagger reveal ready) ===== */
+.platform-tag {
+  opacity: 0;
+  transform: translateY(15px) scale(0.9);
+}
+
+/* ===== Step indicator circles ===== */
 .step-circle {
   width: 40px;
   height: 40px;
@@ -288,50 +320,70 @@
   background: var(--color-surface);
 }
 
-/* === Tilted card section layout === */
-.tilted-cards {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 40px;
-  margin-top: -10vh;
+/* ===== Word Background Highlight (FAQ style, exact Wero) ===== */
+.word-highlight {
+  position: relative;
+  display: inline-block;
+  padding: 0 8px;
 }
 
-@media (min-width: 768px) {
-  .tilted-cards {
-    flex-direction: row;
-    align-items: center;
-  }
+.word-highlight__bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #1d1c1c;
+  border-radius: 12px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  z-index: -1;
 }
 
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(40px); }
-  to { opacity: 1; transform: translateX(0); }
+.word-highlight__bg.--green { background-color: #83f582; }
+.word-highlight__bg.--pink { background-color: #fd74fd; }
+.word-highlight__bg.--cyan { background-color: #7af7f7; }
+.word-highlight__bg.--yellow { background-color: #FFF48D; }
+
+/* ===== Content sections ===== */
+.section-gradient {
+  background: #FAFAF9;
 }
 
-.fade-up {
-  animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  opacity: 0;
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.scale-in {
-  animation: scaleIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  opacity: 0;
+/* ===== Highlight text decoration ===== */
+.text-highlight {
+  position: relative;
+  display: inline-block;
 }
 
-.slide-right {
-  animation: slideInRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  opacity: 0;
+.text-highlight::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: 0;
+  height: 40%;
+  background: var(--color-highlight);
+  z-index: -1;
+  border-radius: 4px;
 }
 
-/* === Stagger delays === */
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
-
-/* === Pill language switcher === */
+/* ===== Pill language switcher ===== */
 .pill-switch {
   display: inline-flex;
   background: var(--color-surface);
@@ -351,42 +403,4 @@
   background: var(--color-text);
   color: white;
   border-radius: var(--radius-full);
-}
-
-/* === Content sections (below hero) === */
-.section-gradient {
-  background: linear-gradient(180deg, #FFF9C4 0%, #FFFFFF 100%);
-}
-
-/* === Scrollbar === */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-/* === Highlight text decoration === */
-.text-highlight {
-  position: relative;
-  display: inline-block;
-}
-
-.text-highlight::after {
-  content: '';
-  position: absolute;
-  left: -4px;
-  right: -4px;
-  bottom: 0;
-  height: 40%;
-  background: var(--color-highlight);
-  z-index: -1;
-  border-radius: 4px;
 }
