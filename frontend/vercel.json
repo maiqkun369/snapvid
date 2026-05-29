@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://snapvid-api.example.com/api/:path*"
+      "destination": "https://snapvid-production.up.railway.app/api/:path*"
     }
   ]
 }
