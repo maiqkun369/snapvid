@@ -129,7 +129,16 @@ function Toolbox() {
     try {
       const res = await fetch(url, { method: 'POST' });
       const data = await res.json();
-      if (res.ok) setResult(data); else setError(data.detail || '处理失败');
+      if (res.ok) {
+        setResult(data);
+        // Refresh file list if output was registered
+        if (data.registered_task_id) {
+          const token = localStorage.getItem('snapvid_token') || '';
+          fetch(`/api/downloads?token=${token}&limit=50`).then(r => r.json()).then(setTasks).catch(() => {});
+        }
+      } else {
+        setError(data.detail || '处理失败');
+      }
     } catch (e) { setError('网络错误'); }
     setProcessing(false);
   };
@@ -350,6 +359,9 @@ function Toolbox() {
       {result && (
         <div className="p-4 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 space-y-3">
           <p className="text-sm text-emerald-300/80">✓ {result.message}</p>
+          {result.registered_task_id && (
+            <p className="text-xs text-cyan-400/60">已自动加入文件列表，可在其他工具中继续使用</p>
+          )}
           {result.output_filename && result.output_filename.match(/\.(jpg|jpeg|png|webp|gif)$/i) && (
             <img src={`/api/tools/preview/${encodeURIComponent(result.output_filename)}`} alt="" className="rounded-lg max-h-[200px] object-contain" />
           )}

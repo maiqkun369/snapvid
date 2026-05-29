@@ -1106,6 +1106,26 @@ class DownloaderService:
     def get_task(self, task_id: str) -> Optional[DownloadTask]:
         return self._tasks.get(task_id)
 
+    def register_file_as_task(self, filename: str, title: str = "", owner: str = "anonymous") -> str:
+        """Register a processed/output file as a new task so it appears in file selectors."""
+        import uuid
+        task_id = str(uuid.uuid4())
+        file_path = DOWNLOADS_DIR / filename
+        if not file_path.exists():
+            return ""
+        self._tasks[task_id] = DownloadTask(
+            id=task_id,
+            url="",
+            status=DownloadStatus.COMPLETED,
+            progress=100.0,
+            filename=filename,
+            title=title or filename,
+            filesize=file_path.stat().st_size,
+            created_at=str(file_path.stat().st_mtime),
+            owner=owner,
+        )
+        return task_id
+
     def delete_task(self, task_id: str) -> bool:
         task = self._tasks.get(task_id)
         if task is None:

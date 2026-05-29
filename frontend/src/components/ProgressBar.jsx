@@ -6,9 +6,11 @@ function cleanErrorMessage(error) {
   const msg = error.toString();
   // YouTube/geo-blocked errors
   if (msg.includes('Sign in to confirm') || msg.includes('bot'))
-    return '该视频所在平台当前网络无法直接访问，请在「高级选项」中配置代理后重试';
+    return 'YouTube/Twitter 等海外平台在当前网络环境下不可用（需科学上网）';
   if (msg.includes('cookies') || msg.includes('Fresh cookies'))
-    return '该平台需要网络代理才能访问，请在「高级选项」中配置代理后重试';
+    return '海外平台在当前网络环境下不可用，建议使用国内平台（B站/抖音）';
+  if (msg.includes('暂不可用') || msg.includes('无法连接'))
+    return '海外平台暂不可用。当前仅支持：B站、抖音、快手、西瓜视频等国内平台';
   if (msg.includes('Video unavailable'))
     return '视频不可用：可能已被删除或设为私密';
   if (msg.includes('HTTP Error 403') || msg.includes('Forbidden'))

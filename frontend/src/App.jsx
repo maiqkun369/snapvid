@@ -12,8 +12,8 @@ import BatchResultPanel from './components/BatchResultPanel.jsx';
 function friendlyError(msg) {
   if (!msg) return '操作失败，请重试';
   const s = msg.toString();
-  if (s.includes('Sign in') || s.includes('bot') || s.includes('cookies') || s.includes('Cookie'))
-    return '该平台当前网络无法直接访问，请在高级选项中配置代理后重试';
+  if (s.includes('Sign in') || s.includes('bot') || s.includes('cookies') || s.includes('Cookie') || s.includes('暂不可用'))
+    return 'YouTube/Twitter 等海外平台在当前网络环境下不可用。当前支持：B站、抖音、快手、西瓜视频等国内平台';
   if (s.includes('Video unavailable'))
     return '视频不可用，可能已被删除或设为私密';
   if (s.includes('Unsupported URL'))

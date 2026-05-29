@@ -145,12 +145,12 @@ async def separate_audio(file_path: str, mode: str = "vocals") -> dict:
     output = path.parent / f"{path.stem}{suffix}.mp3"
 
     # Basic vocal isolation using ffmpeg center-channel extraction
-    # This works for stereo audio where vocals are centered
+    # In stereo mixes, vocals are panned center (equal L+R), instruments are panned wide
     if mode == "vocals":
-        # Extract center channel (vocals are usually panned center)
-        af_filter = "pan=mono|c0=c0-c1"  # Simplified vocal isolation
+        # Keep center: (L+R)/2 preserves what's common to both channels (vocals)
+        af_filter = "pan=mono|c0=0.5*c0+0.5*c1"
     else:
-        # Remove center channel (leaves mostly instruments)
+        # Remove center: L-R cancels what's common (vocals), keeping panned instruments
         af_filter = "pan=stereo|c0=c0-c1|c1=c1-c0"
 
     cmd = [

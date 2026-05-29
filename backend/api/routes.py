@@ -476,6 +476,24 @@ async def websocket_progress(websocket: WebSocket, task_id: str) -> None:
 
 # === Media Tools Endpoints (FFmpeg-based) ===
 
+
+def _register_output(result: dict, source_task_id: str = "") -> dict:
+    """After a tool produces output, register the file as a new task for reuse."""
+    filename = result.get("output_filename")
+    if filename:
+        # Determine owner from source task
+        owner = "anonymous"
+        if source_task_id:
+            src_task = downloader_service.get_task(source_task_id)
+            if src_task:
+                owner = src_task.owner or "anonymous"
+        title = filename.rsplit(".", 1)[0] if "." in filename else filename
+        new_id = downloader_service.register_file_as_task(filename, title, owner)
+        if new_id:
+            result["registered_task_id"] = new_id
+    return result
+
+
 @router.post("/tools/convert")
 async def tools_convert(task_id: str = "", target_format: str = "mp4") -> dict:
     """Convert video/audio format."""
@@ -484,7 +502,8 @@ async def tools_convert(task_id: str = "", target_format: str = "mp4") -> dict:
         raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
     file_path = str(downloader_service.get_downloads_dir() / task.filename)
     try:
-        return await media_tools_service.convert_format(file_path, target_format)
+        result = await media_tools_service.convert_format(file_path, target_format)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -497,7 +516,8 @@ async def tools_audio_extract(task_id: str = "", audio_format: str = "mp3", qual
         raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
     file_path = str(downloader_service.get_downloads_dir() / task.filename)
     try:
-        return await media_tools_service.extract_audio(file_path, audio_format, quality)
+        result = await media_tools_service.extract_audio(file_path, audio_format, quality)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -510,7 +530,8 @@ async def tools_thumbnail(task_id: str = "", time_pos: str = "00:00:01") -> dict
         raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
     file_path = str(downloader_service.get_downloads_dir() / task.filename)
     try:
-        return await media_tools_service.extract_thumbnail(file_path, time_pos)
+        result = await media_tools_service.extract_thumbnail(file_path, time_pos)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -525,7 +546,8 @@ async def tools_compress(task_id: str = "", quality: str = "medium") -> dict:
     crf_map = {"low": 32, "medium": 28, "high": 23}
     crf = crf_map.get(quality, 28)
     try:
-        return await media_tools_service.compress_video(file_path, crf=crf)
+        result = await media_tools_service.compress_video(file_path, crf=crf)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -543,7 +565,8 @@ async def tools_merge(task_ids: str = "") -> dict:
             raise HTTPException(status_code=404, detail=f"任务 {tid} 不存在或未完成")
         file_paths.append(str(downloader_service.get_downloads_dir() / task.filename))
     try:
-        return await media_tools_service.merge_videos(file_paths)
+        result = await media_tools_service.merge_videos(file_paths)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -591,7 +614,8 @@ async def tools_video_to_gif(task_id: str = "", start: str = "00:00:00", duratio
         raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
     file_path = str(downloader_service.get_downloads_dir() / task.filename)
     try:
-        return await media_tools_service.video_to_gif(file_path, start, duration, fps, width)
+        result = await media_tools_service.video_to_gif(file_path, start, duration, fps, width)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -604,7 +628,8 @@ async def tools_add_watermark(task_id: str = "", text: str = "SnapVid", position
         raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
     file_path = str(downloader_service.get_downloads_dir() / task.filename)
     try:
-        return await media_tools_service.add_watermark(file_path, text, position)
+        result = await media_tools_service.add_watermark(file_path, text, position)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -617,7 +642,8 @@ async def tools_denoise_audio(task_id: str = "") -> dict:
         raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
     file_path = str(downloader_service.get_downloads_dir() / task.filename)
     try:
-        return await media_tools_service.denoise_audio(file_path)
+        result = await media_tools_service.denoise_audio(file_path)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -741,7 +767,8 @@ async def editor_export(task_id: str = "", edit_plan: str = "{}") -> dict:
     except _json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="编辑方案格式错误")
     try:
-        return await editor_service.export_edit(file_path, plan)
+        result = await editor_service.export_edit(file_path, plan)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -779,7 +806,8 @@ async def editor_export_multi(request: Request) -> dict:
     }
 
     try:
-        return await editor_service.export_multi_source(plan)
+        result = await editor_service.export_multi_source(plan)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -933,9 +961,11 @@ async def tools_remove_background(task_id: str = "", mode: str = "image") -> dic
 
     try:
         if mode == "video":
-            return await ai_media.remove_background_video(file_path)
+            result = await ai_media.remove_background_video(file_path)
+            return _register_output(result, task_id)
         else:
-            return await ai_media.remove_background_image(file_path)
+            result = await ai_media.remove_background_image(file_path)
+            return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -951,7 +981,8 @@ async def tools_audio_separate(task_id: str = "", mode: str = "vocals") -> dict:
     file_path = str(downloader_service.get_downloads_dir() / task.filename)
 
     try:
-        return await ai_media.separate_audio(file_path, mode)
+        result = await ai_media.separate_audio(file_path, mode)
+        return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
