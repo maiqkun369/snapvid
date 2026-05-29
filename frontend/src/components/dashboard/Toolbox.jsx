@@ -147,7 +147,44 @@ function Toolbox() {
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-medium text-white/80 mb-1">工具箱</h2>
-        <p className="text-sm text-white/30">选择视频 → 选择工具 → 处理 → 下载</p>
+        <p className="text-sm text-white/30">AI 智能工具 + 专业媒体处理工作台</p>
+      </div>
+
+      {/* FFmpeg-Web Toolbox Entry */}
+      <a
+        href="http://localhost:9091"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block p-5 rounded-xl bg-gradient-to-r from-cyan-500/[0.08] to-purple-500/[0.08]
+          border border-cyan-500/20 hover:border-cyan-400/40 transition-all group cursor-pointer"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+              媒体处理工作台
+            </h3>
+            <p className="text-xs text-white/40 mt-1">
+              专业的视频/音频转码、合并、修剪、滤镜、元数据编辑 — 浏览器内完成，无需上传
+            </p>
+          </div>
+          <div className="text-white/30 group-hover:text-white/60 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-3 flex-wrap">
+          {['格式转换','视频合并','修剪裁切','滤镜特效','音频编辑','元数据','批量处理'].map(f => (
+            <span key={f} className="text-[10px] text-white/30 px-2 py-0.5 rounded bg-white/[0.04]">{f}</span>
+          ))}
+        </div>
+      </a>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-white/[0.06]" />
+        <span className="text-xs text-white/20">AI 智能工具</span>
+        <div className="flex-1 h-px bg-white/[0.06]" />
       </div>
 
       {/* Step 1: File Selection */}
