@@ -22,16 +22,6 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  # === FFmpeg-Web Toolbox (browser-based media processing) ===
-  ffmpeg-web:
-    build:
-      context: ./ffmpeg-web
-      dockerfile: Dockerfile
-    container_name: snapvid-toolbox
-    ports:
-      - "9091:3000"
-    restart: unless-stopped
-
   # === P0: AI Subtitle Service (Whishper + FasterWhisper) ===
   whishper:
     image: pluja/whishper:latest

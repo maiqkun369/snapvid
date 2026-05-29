@@ -6,6 +6,15 @@ RUN npm install
 COPY frontend/ .
 RUN npm run build
 
+# Build ffmpeg-web toolbox
+FROM node:20-alpine AS toolbox-builder
+
+WORKDIR /app/toolbox
+COPY ffmpeg-web/package.json ffmpeg-web/package-lock.json* ./
+RUN npm install
+COPY ffmpeg-web/ .
+RUN node BuildDist.cjs --local
+
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -24,6 +33,9 @@ COPY backend/ .
 
 # Copy frontend build output to static directory
 COPY --from=frontend-builder /app/frontend/dist /app/static
+
+# Copy ffmpeg-web toolbox to /static/tools/ (same-origin serving)
+COPY --from=toolbox-builder /app/toolbox/dist /app/static/tools
 
 # Create downloads directory
 RUN mkdir -p /app/downloads
