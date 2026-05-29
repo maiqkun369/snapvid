@@ -109,14 +109,37 @@
     @apply transition-all duration-300;
     background: var(--color-surface);
     border: 2px solid var(--color-text);
-    border-radius: var(--radius-lg);
+    border-radius: 8px;
     padding: 28px;
+    box-shadow: 0 6px 0 0 var(--color-text);
   }
 
   .card:hover {
     transform: translateY(-3px);
-    box-shadow: 6px 6px 0 0 var(--color-text);
+    box-shadow: 0 10px 0 0 var(--color-text);
   }
+
+  /* Gradient cards (Wero style tilted) */
+  .card-gradient-1 {
+    background: linear-gradient(73deg, #7af7f7 10%, #83f582 91%);
+    border: 2px solid var(--color-text);
+    border-radius: 8px;
+    box-shadow: 0 8px 0 0 var(--color-text);
+    transform: rotate(3deg);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .card-gradient-2 {
+    background: linear-gradient(221deg, #fd97fd -1%, #fdad70 103%);
+    border: 2px solid var(--color-text);
+    border-radius: 8px;
+    box-shadow: 0 8px 0 0 var(--color-text);
+    transform: rotate(-2deg);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .card-gradient-1:hover { transform: rotate(0deg) translateY(-4px); }
+  .card-gradient-2:hover { transform: rotate(0deg) translateY(-4px); }
 }
 
 /* === Hero Gradient Background (pink → yellow) === */
@@ -170,9 +193,83 @@
   50% { transform: translateY(-12px) rotate(3deg); }
 }
 
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-40px); }
-  to { opacity: 1; transform: translateX(0); }
+/* === Bottom Floating Nav Bar (Wero style) === */
+.bottom-nav {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-full);
+  padding: 6px 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.bottom-nav a, .bottom-nav button {
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.bottom-nav a:hover, .bottom-nav button:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.bottom-nav a.active, .bottom-nav button.active {
+  background: var(--color-text);
+  color: white;
+}
+
+/* === Scroll-triggered fade (CSS-only with scroll margin) === */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === Step indicator circles === */
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  background: var(--color-surface);
+}
+
+/* === Tilted card section layout === */
+.tilted-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 40px;
+  margin-top: -10vh;
+}
+
+@media (min-width: 768px) {
+  .tilted-cards {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 @keyframes slideInRight {

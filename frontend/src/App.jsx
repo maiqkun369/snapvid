@@ -158,6 +158,25 @@ function App() {
     setRefreshHistory((prev) => prev + 1);
   }, []);
 
+  // Scroll-triggered reveal animation (Wero style)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+    // Observe all .reveal elements after render
+    setTimeout(() => {
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }, 100);
+    return () => observer.disconnect();
+  }, [route]);
+
   // Auth: restore session from token
   useEffect(() => {
     const token = localStorage.getItem('snapvid_token');
@@ -247,7 +266,7 @@ function App() {
         <div className="max-w-3xl mx-auto">
 
           {/* Section title */}
-          <div className="text-center mb-12 fade-up">
+          <div className="text-center mb-12 reveal">
             <h2 className="text-3xl sm:text-4xl font-black text-[#1D1C1C] tracking-tight">
               粘贴链接，一键下载
             </h2>
@@ -321,8 +340,16 @@ function App() {
         </div>
       </section>
 
+      {/* === BOTTOM FLOATING NAV (Wero style) === */}
+      <nav className="bottom-nav">
+        <a href="#features" className="active">下载</a>
+        <a href="#platforms">平台</a>
+        {user && <a href="#/dashboard">控制台</a>}
+        {!user && <button onClick={() => setShowAuth(true)}>登录</button>}
+      </nav>
+
       {/* === FOOTER (yellow bg like Wero) === */}
-      <footer className="bg-[#FFF48D] py-10 border-t-3 border-[#1D1C1C]" style={{ borderTopWidth: '3px' }}>
+      <footer className="bg-[#FFF48D] py-10 border-t-3 border-[#1D1C1C] mb-20" style={{ borderTopWidth: '3px' }}>
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="text-sm font-bold text-[#1D1C1C]">
             仅支持下载用户自有版权 / CC0 / 公共领域内容 · 不存储不缓存不分发
