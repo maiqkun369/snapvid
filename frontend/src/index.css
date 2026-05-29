@@ -50,15 +50,14 @@
       text-white font-extrabold text-base
       transition-all duration-200 ease-out
       active:scale-[0.96];
-    background: var(--color-accent);
+    background: var(--color-text);
     padding: 16px 36px;
     border-radius: var(--radius-full);
   }
 
   .btn-accent:hover {
-    background: #E6007A;
+    opacity: 0.8;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(204, 0, 102, 0.3);
   }
 
   .btn-outline {
@@ -109,7 +108,7 @@
     @apply transition-all duration-300;
     background: var(--color-surface);
     border: 2px solid var(--color-text);
-    border-radius: 8px;
+    border-radius: 5px;
     padding: 28px;
     box-shadow: 0 6px 0 0 var(--color-text);
   }
@@ -123,7 +122,7 @@
   .card-gradient-1 {
     background: linear-gradient(73deg, #7af7f7 10%, #83f582 91%);
     border: 2px solid var(--color-text);
-    border-radius: 8px;
+    border-radius: 5px;
     box-shadow: 0 8px 0 0 var(--color-text);
     transform: rotate(3deg);
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -132,7 +131,7 @@
   .card-gradient-2 {
     background: linear-gradient(221deg, #fd97fd -1%, #fdad70 103%);
     border: 2px solid var(--color-text);
-    border-radius: 8px;
+    border-radius: 5px;
     box-shadow: 0 8px 0 0 var(--color-text);
     transform: rotate(-2deg);
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -140,13 +139,24 @@
 
   .card-gradient-1:hover { transform: rotate(0deg) translateY(-4px); }
   .card-gradient-2:hover { transform: rotate(0deg) translateY(-4px); }
+
+  /* Tool controls in dashboard */
+  .tool-select {
+    @apply text-sm font-medium rounded-full px-3 py-1.5 border border-[#1D1C1C] bg-white text-[#1D1C1C]
+      focus:outline-none focus:ring-1 focus:ring-[#1D1C1C];
+  }
+
+  .tool-input {
+    @apply text-sm font-medium rounded-full px-3 py-1.5 border border-[#1D1C1C] bg-white text-[#1D1C1C]
+      focus:outline-none focus:ring-1 focus:ring-[#1D1C1C] placeholder-[#4A4A4A]/50;
+  }
 }
 
-/* === Hero Gradient Background (animated like Wero) === */
+/* === Hero Gradient Background (animated, exact Wero params) === */
 .gradient-hero {
   background: linear-gradient(121deg, #ff158a -20.66%, #fff48d 65.83%);
   background-size: 120% 120%;
-  animation: gradientShift 10s ease infinite;
+  animation: gradient 10s ease infinite;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -156,7 +166,7 @@
   overflow: hidden;
 }
 
-@keyframes gradientShift {
+@keyframes gradient {
   0% { background-position: 50% 50%; }
   25% { background-position: 0% 0%; }
   50% { background-position: 50% 50%; }
@@ -175,6 +185,7 @@
   color: var(--color-text);
 }
 
+/* Title lines reveal animation — translateY(30px) to 0 */
 .display-title span {
   display: block;
   opacity: 0;
@@ -210,11 +221,6 @@
     opacity: 1;
     transform: scale(1);
   }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(3deg); }
 }
 
 /* === Bottom Floating Nav Bar (exact Wero style) === */
@@ -256,11 +262,11 @@
   border: 1px solid var(--color-text);
 }
 
-/* === Scroll-triggered fade (CSS-only with scroll margin) === */
+/* === Scroll-triggered reveal (exact Wero CSS) === */
 .reveal {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reveal.visible {
@@ -310,15 +316,6 @@
 
 .scale-in {
   animation: scaleIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  opacity: 0;
-}
-
-.float-anim {
-  animation: float 3s ease-in-out infinite;
-}
-
-.slide-left {
-  animation: slideInLeft 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   opacity: 0;
 }
 

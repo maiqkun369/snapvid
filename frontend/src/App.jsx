@@ -217,25 +217,9 @@ function App() {
 
       {/* === HERO SECTION (full viewport, gradient bg) === */}
       <section className="gradient-hero">
-        {/* Top Logo */}
+        {/* Top Logo — centered */}
         <div className="absolute top-8 left-0 right-0 flex justify-center scale-in">
           <span className="text-2xl font-black tracking-tight text-[#1D1C1C]">SnapVid</span>
-        </div>
-
-        {/* Language / Login switcher (bottom right) */}
-        <div className="absolute bottom-8 right-8 flex items-center gap-3">
-          {user ? (
-            <div className="flex items-center gap-2">
-              {user.plan === 'pro' && (
-                <span className="btn-highlight text-xs py-2 px-4">PRO</span>
-              )}
-              <a href="#/dashboard" className="btn-outline text-sm py-2.5 px-5">控制台</a>
-            </div>
-          ) : (
-            <button onClick={() => setShowAuth(true)} className="btn-outline text-sm py-2.5 px-5">
-              登录
-            </button>
-          )}
         </div>
 
         {/* Main Title (super bold, animated) */}
@@ -246,12 +230,6 @@ function App() {
             <span className="block text-[#CC0066]">BACKUP.</span>
           </h1>
         </div>
-
-        {/* Floating sticker elements */}
-        <div className="absolute top-[20%] left-[8%] text-5xl float-anim delay-2">🎬</div>
-        <div className="absolute top-[15%] right-[10%] text-4xl float-anim delay-3" style={{ animationDelay: '1s' }}>⬇️</div>
-        <div className="absolute bottom-[25%] left-[12%] text-5xl float-anim" style={{ animationDelay: '2s' }}>🎵</div>
-        <div className="absolute bottom-[20%] right-[8%] text-4xl float-anim delay-1" style={{ animationDelay: '0.5s' }}>🎞️</div>
 
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 fade-up delay-5">
