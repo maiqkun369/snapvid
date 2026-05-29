@@ -1,0 +1,77 @@
+sequenceDiagram
+    participant U as 前端
+    participant API as FastAPI
+    participant SR as ServiceRegistry
+    participant DL as DownloaderService
+    participant CB as CobaltProxy
+    participant YT as yt-dlp
+    participant WC as WhishperClient
+    participant WS as Whishper服务
+    participant M3 as M3u8Downloader
+    participant DB as DouyinBatch
+
+    %% === Cobalt 代理下载 ===
+    Note over U, YT: Cobalt 代理下载流程
+    U->>API: POST /api/download {url: "youtube.com/..."}
+    API->>DL: start_download(request)
+    DL->>CB: is_available()
+    alt Cobalt 可用
+        CB-->>DL: true
+        DL->>CB: download_video(url, quality)
+        CB->>CB: POST cobalt_api/api/json {url}
+        CB-->>DL: file_path
+    else Cobalt 不可用
+        CB-->>DL: false
+        DL->>YT: _do_download(url, opts)
+        YT-->>DL: file_path
+    end
+    DL-->>API: task_id
+    API-->>U: {task_id, message}
+
+    %% === Whishper AI 字幕 ===
+    Note over U, WS: Whishper AI 字幕流程
+    U->>API: POST /api/ai/subtitle {task_id, language}
+    API->>API: 获取视频文件路径
+    API->>WC: transcribe(file_path, language, "small")
+    WC->>WS: POST /api/transcriptions (multipart: file)
+    WS-->>WC: {id: "abc", status: "processing"}
+    loop 轮询直到完成
+        WC->>WS: GET /api/transcriptions/abc
+        WS-->>WC: {status: "done", result: {...}}
+    end
+    WC->>WS: GET /api/transcriptions/abc/download?format=srt
+    WS-->>WC: SRT 文件内容
+    WC->>WC: 写入 downloads/{task_id}.srt
+    WC-->>API: {output_filename, language}
+    API-->>U: {status: "completed", output_filename}
+
+    %% === m3u8 下载 ===
+    Note over U, M3: m3u8/HLS 下载流程
+    U->>API: POST /api/m3u8/download {url, name, headers}
+    API->>M3: probe_stream(url)
+    M3->>M3: ffprobe -i url
+    M3-->>API: {duration, codecs, resolution}
+    API->>M3: download(url, name, headers)
+    M3->>M3: ffmpeg -i url -c copy output.mp4
+    M3-->>API: file_path
+    API-->>U: {task_id, filename, status}
+
+    %% === 抖音批量 ===
+    Note over U, DL: 抖音批量下载流程
+    U->>API: POST /api/douyin/batch {user_url, count: 20}
+    API->>DB: fetch_user_videos(user_url, 20)
+    DB->>DB: 解析 sec_uid → 请求抖音 API
+    DB-->>API: [{id, title, url}, ...]
+    loop 每个视频
+        API->>DL: start_download({url})
+    end
+    API-->>U: {batch_id, task_ids, total}
+
+    %% === 服务健康检查 ===
+    Note over API, SR: 服务状态查询
+    U->>API: GET /api/services/status
+    API->>SR: check_all()
+    SR->>CB: health_check (GET cobalt/health)
+    SR->>WC: health_check (GET whishper/api/health)
+    SR-->>API: {cobalt: true, whishper: false, rembg: true}
+    API-->>U: services_status

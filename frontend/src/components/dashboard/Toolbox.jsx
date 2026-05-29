@@ -26,6 +26,11 @@ function Toolbox() {
   const [wmPosition, setWmPosition] = useState('bottomright');
   const [clipStart, setClipStart] = useState(0);
   const [clipEnd, setClipEnd] = useState(0);
+  // New tool options
+  const [subtitleLang, setSubtitleLang] = useState('auto');
+  const [subtitleFormat, setSubtitleFormat] = useState('srt');
+  const [separateMode, setSeparateMode] = useState('vocals');
+  const [m3u8Url, setM3u8Url] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('snapvid_token') || '';
@@ -55,7 +60,10 @@ function Toolbox() {
     { id: 'compress', name: '视频压缩', desc: '减小体积', icon: '📦', pro: true },
     { id: 'watermark_add', name: '添加水印', desc: '自定义文字', icon: '💧', pro: true },
     { id: 'denoise', name: '音频降噪', desc: '去除噪音', icon: '🔇', pro: true },
-    { id: 'subtitle', name: 'AI 字幕', desc: '语音转字幕', icon: '📝', pro: true },
+    { id: 'subtitle', name: 'AI 字幕', desc: '语音识别生成字幕', icon: '📝', pro: true },
+    { id: 'audio_separate', name: '人声分离', desc: '分离人声/BGM', icon: '🎤', pro: true },
+    { id: 'remove_bg', name: 'AI 去背景', desc: '移除视频背景', icon: '🪄', pro: true },
+    { id: 'm3u8', name: 'm3u8下载', desc: 'HLS加密流下载', icon: '📡', pro: true },
     { id: 'super_res', name: 'AI 超分', desc: '画质提升', icon: '✨', pro: true },
     { id: 'watermark', name: 'AI 去水印', desc: '移除水印', icon: '🎨', pro: true },
   ];
@@ -106,7 +114,13 @@ function Toolbox() {
       case 'watermark_add': url = `/api/tools/watermark?${params}&text=${encodeURIComponent(wmText||'SnapVid')}&position=${wmPosition}`; break;
       case 'denoise': url = `/api/tools/denoise?${params}`; break;
       case 'summary': url = `/api/tools/summary?${params}`; break;
-      case 'subtitle': url = `/api/ai/subtitle?${params}&language=auto&format=srt`; break;
+      case 'subtitle': url = `/api/tools/subtitle?${params}&language=${subtitleLang}&format=${subtitleFormat}`; break;
+      case 'audio_separate': url = `/api/tools/audio-separate?${params}&mode=${separateMode}`; break;
+      case 'remove_bg': url = `/api/tools/remove-bg?${params}&mode=video`; break;
+      case 'm3u8':
+        if (!m3u8Url) { setError('请输入 m3u8 链接'); setProcessing(false); return; }
+        url = `/api/tools/m3u8?url=${encodeURIComponent(m3u8Url)}`;
+        break;
       case 'super_res': url = `/api/ai/super-resolution?${params}&scale=2x`; break;
       case 'watermark': url = `/api/ai/watermark-removal?${params}`; break;
       default: setError('功能开发中'); setProcessing(false); return;
@@ -261,8 +275,65 @@ function Toolbox() {
             </div>
           )}
 
-          {(activeTool === 'denoise' || activeTool === 'summary') && (
-            <p className="text-xs text-white/30">无需额外配置，点击处理即可</p>
+          {(activeTool === 'denoise') && (
+            <p className="text-xs text-white/30">自动分析并去除背景噪音，保留人声</p>
+          )}
+          {activeTool === 'summary' && (
+            <p className="text-xs text-white/30">自动提取视频编码/分辨率/帧率/码率等信息</p>
+          )}
+
+          {/* AI Subtitle options */}
+          {activeTool === 'subtitle' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-white/40 w-16">语言</span>
+                <select value={subtitleLang} onChange={(e) => setSubtitleLang(e.target.value)}
+                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
+                  <option value="auto">自动识别</option>
+                  <option value="zh">中文</option>
+                  <option value="en">英文</option>
+                  <option value="ja">日文</option>
+                  <option value="ko">韩文</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-white/40 w-16">格式</span>
+                <select value={subtitleFormat} onChange={(e) => setSubtitleFormat(e.target.value)}
+                  className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
+                  <option value="srt">SRT (通用)</option>
+                  <option value="vtt">WebVTT (网页)</option>
+                  <option value="json">JSON (开发)</option>
+                </select>
+              </div>
+              <p className="text-[10px] text-purple-300/50">由 AI 语音识别引擎驱动，首次使用需等待模型加载</p>
+            </div>
+          )}
+
+          {/* Audio Separation options */}
+          {activeTool === 'audio_separate' && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-white/40 w-16">分离</span>
+              <select value={separateMode} onChange={(e) => setSeparateMode(e.target.value)}
+                className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none flex-1">
+                <option value="vocals">提取人声 (去BGM)</option>
+                <option value="music">提取BGM (去人声)</option>
+              </select>
+            </div>
+          )}
+
+          {/* Remove BG info */}
+          {activeTool === 'remove_bg' && (
+            <p className="text-xs text-white/30">AI 自动移除视频背景 (仅支持 ≤30秒 短片段)</p>
+          )}
+
+          {/* m3u8 URL input */}
+          {activeTool === 'm3u8' && (
+            <div className="space-y-2">
+              <input type="text" value={m3u8Url} onChange={(e) => setM3u8Url(e.target.value)}
+                placeholder="粘贴 .m3u8 链接"
+                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none" />
+              <p className="text-[10px] text-white/20">支持加密 HLS 流，下载后自动合并为 MP4</p>
+            </div>
           )}
         </div>
       )}

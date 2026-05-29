@@ -11,9 +11,50 @@ services:
       - ENV=development
       - PORT=8080
       - JWT_SECRET=snapvid_dev_secret_2026_secure_key_min32bytes
+      # External services (optional - graceful degradation if unavailable)
+      - COBALT_API_URL=${COBALT_API_URL:-}
+      - WHISHPER_API_URL=http://whishper:80
+      - REMBG_ENABLED=true
     volumes:
       - downloads:/app/downloads
+    depends_on:
+      whishper:
+        condition: service_started
+    restart: unless-stopped
+
+  # === P0: AI Subtitle Service (Whishper + FasterWhisper) ===
+  whishper:
+    image: pluja/whishper:latest
+    container_name: snapvid-whishper
+    ports:
+      - "8082:80"
+    environment:
+      - PUBLIC_INTERNAL_API_HOST=http://127.0.0.1:80
+      - PUBLIC_TRANSLATION_API_HOST=
+      - PUBLIC_API_HOST=
+      - PUBLIC_WHISHPER_PROFILE=cpu
+      - WHISPER_MODELS_DIR=/app/models
+      - UPLOAD_DIR=/app/uploads
+      - CPU_THREADS=4
+    volumes:
+      - whishper_models:/app/models
+      - whishper_uploads:/app/uploads
+      - downloads:/app/shared_downloads
+    restart: unless-stopped
+
+  # Whishper needs MongoDB
+  mongo:
+    image: mongo:7
+    container_name: snapvid-mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=whishper
+      - MONGO_INITDB_ROOT_PASSWORD=whishper
+    volumes:
+      - mongo_data:/data/db
     restart: unless-stopped
 
 volumes:
   downloads:
+  whishper_models:
+  whishper_uploads:
+  mongo_data:

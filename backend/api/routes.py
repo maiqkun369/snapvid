@@ -33,6 +33,9 @@ from services.media_tools import MediaToolsService
 from services.referral import ReferralService
 from services.scheduler import SchedulerService
 from services.editor import EditorService
+from services.cobalt_service import is_cobalt_available, download_via_cobalt
+from services import whishper_service
+from services import ai_media
 
 logger = logging.getLogger(__name__)
 
@@ -837,4 +840,118 @@ async def editor_stream_video(task_id: str, request: Request):
         media_type=media_type,
         headers={"Accept-Ranges": "bytes"},
     )
+
+
+# === P0: Cobalt Download Proxy ===
+
+@router.get("/services/status")
+async def get_services_status() -> dict:
+    """Get status of all optional external services."""
+    return {
+        "cobalt": is_cobalt_available(),
+        "whishper": whishper_service.is_whishper_available(),
+    }
+
+
+@router.post("/cobalt/download")
+async def cobalt_download(url: str = "", quality: str = "1080", audio_only: bool = False) -> dict:
+    """Download via Cobalt API (for geo-blocked platforms)."""
+    if not url:
+        raise HTTPException(status_code=400, detail="URL 不能为空")
+    if not is_cobalt_available():
+        raise HTTPException(status_code=503, detail="Cobalt 服务不可用")
+    result = download_via_cobalt(url, quality, audio_only)
+    if not result:
+        raise HTTPException(status_code=502, detail="Cobalt 下载失败")
+    return result
+
+
+# === P0: AI Subtitle (Whishper) ===
+
+@router.post("/tools/subtitle")
+async def tools_generate_subtitle(task_id: str = "", language: str = "auto", format: str = "srt") -> dict:
+    """Generate AI subtitles for a video using Whishper."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+    try:
+        return await whishper_service.generate_subtitle_file(file_path, format, language)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# === P1: m3u8/HLS Download ===
+
+@router.post("/tools/m3u8")
+async def tools_m3u8_download(url: str = "", token: str = "") -> dict:
+    """Download m3u8/HLS stream using ffmpeg."""
+    if not url:
+        raise HTTPException(status_code=400, detail="请提供 m3u8 链接")
+    if not url.endswith(".m3u8") and "m3u8" not in url:
+        raise HTTPException(status_code=400, detail="请提供有效的 m3u8 链接")
+
+    import uuid as _uuid
+    import subprocess
+    job_id = str(_uuid.uuid4())[:8]
+    output_path = downloader_service.get_downloads_dir() / f"hls_{job_id}.mp4"
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", url,
+        "-c", "copy",
+        "-bsf:a", "aac_adtstoasc",
+        str(output_path)
+    ]
+
+    try:
+        import asyncio
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr[-200:] if result.stderr else "m3u8 下载失败")
+
+        return {
+            "output_filename": output_path.name,
+            "output_size": output_path.stat().st_size,
+            "message": "m3u8 流下载完成",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"m3u8 下载失败: {str(e)}")
+
+
+# === P2: AI Background Removal ===
+
+@router.post("/tools/remove-bg")
+async def tools_remove_background(task_id: str = "", mode: str = "image") -> dict:
+    """Remove background from image or video."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+
+    try:
+        if mode == "video":
+            return await ai_media.remove_background_video(file_path)
+        else:
+            return await ai_media.remove_background_image(file_path)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# === P2: Audio Separation (Vocals/BGM) ===
+
+@router.post("/tools/audio-separate")
+async def tools_audio_separate(task_id: str = "", mode: str = "vocals") -> dict:
+    """Separate audio into vocals or background music."""
+    task = downloader_service.get_task(task_id)
+    if not task or not task.filename:
+        raise HTTPException(status_code=404, detail="下载任务不存在或文件未完成")
+    file_path = str(downloader_service.get_downloads_dir() / task.filename)
+
+    try:
+        return await ai_media.separate_audio(file_path, mode)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 

@@ -1,0 +1,93 @@
+classDiagram
+    class ServiceRegistry {
+        -dict~str,bool~ _services_status
+        +check_all() dict
+        +is_available(service_name: str) bool
+        +health_check_loop() None
+    }
+
+    class CobaltProxy {
+        -str api_url
+        -bool enabled
+        +is_available() bool
+        +get_video_info(url: str) dict
+        +download_video(url: str, quality: str) str
+        +_fallback_to_ytdlp(url: str) str
+    }
+
+    class WhishperClient {
+        -str api_url
+        -bool enabled
+        +is_available() bool
+        +transcribe(file_path: str, language: str, model: str) dict
+        +get_subtitle_file(task_id: str, format: str) str
+        +poll_status(task_id: str) dict
+    }
+
+    class M3u8Downloader {
+        -Path downloads_dir
+        +download(m3u8_url: str, output_name: str, headers: dict) str
+        +probe_stream(url: str) dict
+        +_run_ffmpeg(args: list) int
+    }
+
+    class DouyinBatch {
+        -str sec_uid
+        -int max_count
+        +fetch_user_videos(user_url: str, count: int) list~dict~
+        +fetch_topic_videos(topic_id: str, count: int) list~dict~
+        +batch_download(video_list: list, task_callback: callable) list~str~
+    }
+
+    class BackgroundRemoval {
+        -bool enabled
+        -object model
+        +is_available() bool
+        +remove_background_video(file_path: str, output_path: str) str
+        +remove_background_image(file_path: str) str
+        +_process_frame(frame: ndarray) ndarray
+    }
+
+    class AudioSeparator {
+        -bool enabled
+        -str model_name
+        +is_available() bool
+        +separate(file_path: str, stems: list) dict
+        +get_vocals(file_path: str) str
+        +get_bgm(file_path: str) str
+    }
+
+    class SpeakerDiarize {
+        -bool enabled
+        -object pipeline
+        +is_available() bool
+        +diarize(file_path: str) list~dict~
+        +_load_pipeline() None
+    }
+
+    class AppConfig {
+        +str COBALT_API_URL
+        +bool COBALT_ENABLED
+        +str WHISHPER_API_URL
+        +bool WHISHPER_ENABLED
+        +bool REMBG_ENABLED
+        +bool DEMUCS_ENABLED
+        +bool PYANNOTE_ENABLED
+        +Path DOWNLOADS_DIR
+        +Path MODELS_DIR
+    }
+
+    class DownloaderService {
+        -CobaltProxy cobalt
+        +start_download(request, owner) str
+        +_try_cobalt_first(url) str
+    }
+
+    ServiceRegistry --> CobaltProxy : monitors
+    ServiceRegistry --> WhishperClient : monitors
+    DownloaderService --> CobaltProxy : uses
+    CobaltProxy ..> AppConfig : reads
+    WhishperClient ..> AppConfig : reads
+    BackgroundRemoval ..> AppConfig : reads
+    AudioSeparator ..> AppConfig : reads
+    SpeakerDiarize ..> AppConfig : reads
