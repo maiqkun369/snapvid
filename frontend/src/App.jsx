@@ -210,19 +210,58 @@ function App() {
       // --- Hero Title Parallax (moves up + fades on scroll) ---
       if (heroTitleRef.current) {
         gsap.to(heroTitleRef.current, {
-          y: -120,
+          y: -150,
           autoAlpha: 0,
           ease: 'none',
           scrollTrigger: {
             trigger: heroRef.current,
             start: 'top top',
-            end: '80% top',
+            end: '70% top',
             scrub: true,
           },
         });
       }
 
-      // --- Content Section Reveal (cards, inputs slide up with scrub) ---
+      // --- Decorative Parallax Elements (Wero puzzle/hands-style floating objects) ---
+      const parallaxEls = document.querySelectorAll('.parallax-float');
+      parallaxEls.forEach((el, i) => {
+        const speed = el.dataset.speed || (1 + i * 0.5);
+        gsap.fromTo(el, {
+          y: 200 + i * 80,
+          rotation: -15 + i * 10,
+          autoAlpha: 0,
+        }, {
+          y: 0,
+          rotation: 0,
+          autoAlpha: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: speed,
+          },
+        });
+      });
+
+      // --- Content Over Hero: Parallax slide-up (exact Wero: content floats up over hero) ---
+      if (contentRef.current) {
+        // The content section itself gets a scrub-driven translateY for that floating-in feel
+        gsap.fromTo(contentRef.current, {
+          y: 100,
+        }, {
+          y: 0,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: contentRef.current,
+            start: 'top bottom',
+            end: 'top 60%',
+            scrub: 1,
+          },
+        });
+      }
+
+      // --- Content Section Cards Reveal (scrub entrance from below) ---
       const cards = document.querySelectorAll('.gsap-card-reveal');
       cards.forEach((card) => {
         gsap.fromTo(card, {
@@ -277,6 +316,45 @@ function App() {
               autoAlpha: 1,
               y: 0,
               duration: 1.2,
+              ease: 'back.out(1.7)',
+            });
+          },
+        });
+      });
+
+      // --- Subtitle Reveals (Wero stagger spans) ---
+      const subtitleEls = document.querySelectorAll('[data-subtitle-reveal]');
+      subtitleEls.forEach((el) => {
+        const spans = el.querySelectorAll('span');
+        if (!spans.length) return;
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 85%',
+          once: true,
+          onEnter: () => {
+            gsap.to(spans, {
+              autoAlpha: 1,
+              y: 0,
+              duration: 1.2,
+              stagger: 0.15,
+              ease: 'back.out(1.7)',
+            });
+          },
+        });
+      });
+
+      // --- Puzzle Section Title (special big title) ---
+      const puzzleTitles = document.querySelectorAll('.puzzle-section-title');
+      puzzleTitles.forEach((el) => {
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 80%',
+          once: true,
+          onEnter: () => {
+            gsap.to(el, {
+              autoAlpha: 1,
+              y: 0,
+              duration: 1.5,
               ease: 'back.out(1.7)',
             });
           },
@@ -368,8 +446,43 @@ function App() {
           <span className="text-2xl font-black tracking-tight text-[#1D1C1C]">SnapVid</span>
         </div>
 
+        {/* Decorative Parallax Floating Elements (Wero puzzle/hands style) */}
+        <div className="parallax-float absolute top-[20%] right-[5%] w-[180px] h-[180px] pointer-events-none" data-speed="0.8">
+          <svg viewBox="0 0 200 200" fill="none" className="w-full h-full">
+            <rect x="20" y="20" width="160" height="160" rx="16" fill="#83f582" stroke="#1d1c1c" strokeWidth="2"
+              transform="rotate(-12 100 100)"/>
+            <rect x="50" y="50" width="80" height="80" rx="8" fill="none" stroke="#1d1c1c" strokeWidth="1.5"
+              transform="rotate(5 90 90)"/>
+            <circle cx="100" cy="100" r="15" fill="#1d1c1c"/>
+          </svg>
+        </div>
+
+        <div className="parallax-float absolute bottom-[15%] left-[3%] w-[140px] h-[140px] pointer-events-none" data-speed="1.2">
+          <svg viewBox="0 0 160 160" fill="none" className="w-full h-full">
+            <ellipse cx="80" cy="80" rx="70" ry="50" fill="none" stroke="#1d1c1c" strokeWidth="2"
+              transform="rotate(-8 80 80)"/>
+            <ellipse cx="80" cy="80" rx="45" ry="30" fill="none" stroke="#1d1c1c" strokeWidth="1.5"
+              transform="rotate(15 80 80)"/>
+            <path d="M60 80 L80 60 L100 80 L80 100 Z" fill="#fd97fd" stroke="#1d1c1c" strokeWidth="1.5"/>
+          </svg>
+        </div>
+
+        <div className="parallax-float absolute top-[60%] right-[15%] w-[100px] h-[100px] pointer-events-none" data-speed="1.8">
+          <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
+            <path d="M50 5 L61 39 L97 39 L68 60 L79 95 L50 73 L21 95 L32 60 L3 39 L39 39 Z"
+              fill="white" stroke="#1d1c1c" strokeWidth="2"/>
+          </svg>
+        </div>
+
+        <div className="parallax-float absolute bottom-[30%] right-[40%] w-[220px] h-[120px] pointer-events-none" data-speed="2.2">
+          <svg viewBox="0 0 220 120" fill="none" className="w-full h-full">
+            <rect x="10" y="10" width="200" height="100" rx="50" fill="none" stroke="#1d1c1c" strokeWidth="2"/>
+            <rect x="30" y="25" width="160" height="70" rx="35" fill="none" stroke="#1d1c1c" strokeWidth="1.2"/>
+          </svg>
+        </div>
+
         {/* Main Title (GSAP stagger reveal) */}
-        <div className="text-center px-6" ref={heroTitleRef}>
+        <div className="text-center px-6 relative z-10" ref={heroTitleRef}>
           <h1 className="display-title">
             <span>YOUR</span>
             <span>CREATIVE</span>
@@ -378,15 +491,53 @@ function App() {
         </div>
 
         {/* Scroll indicator (GSAP entrance) */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2" ref={ctaRef} style={{ opacity: 0 }}>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10" ref={ctaRef} style={{ opacity: 0 }}>
           <div className="w-8 h-12 rounded-full border-2 border-[#1D1C1C] flex items-start justify-center p-2">
             <div className="w-1.5 h-3 bg-[#1D1C1C] rounded-full animate-bounce" />
           </div>
         </div>
       </section>
 
-      {/* === MAIN CONTENT (scrolls over hero) === */}
+      {/* === MAIN CONTENT (scrolls over hero with parallax) === */}
       <section className="content-over-hero" ref={contentRef}>
+
+        {/* Puzzle/Intro Section (Wero "WAT IS HET?" style) */}
+        <div className="puzzle-intro-section">
+          <div className="max-w-4xl mx-auto px-6 py-24 relative">
+            {/* Parallax decorative element */}
+            <div className="parallax-float absolute -top-16 right-0 w-[250px] h-[250px] pointer-events-none opacity-80" data-speed="1.5">
+              <svg viewBox="0 0 250 250" fill="none" className="w-full h-full">
+                <rect x="30" y="30" width="190" height="100" rx="10"
+                  fill="url(#grad1)" stroke="#1d1c1c" strokeWidth="2"
+                  transform="rotate(-6 125 80)"/>
+                <defs>
+                  <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#7af7f7"/>
+                    <stop offset="100%" stopColor="#83f582"/>
+                  </linearGradient>
+                </defs>
+                {/* Puzzle notch */}
+                <circle cx="125" cy="80" r="20" fill="none" stroke="#1d1c1c" strokeWidth="2"/>
+                <circle cx="125" cy="80" r="8" fill="#1d1c1c"/>
+              </svg>
+            </div>
+
+            <div className="relative z-10">
+              <p className="puzzle-section-label" data-subtitle-reveal>
+                <span className="inline-block">→</span>
+                <span className="inline-block ml-2">视频下载，从未如此简单</span>
+              </p>
+              <h2 className="puzzle-section-title" data-title-reveal>
+                粘贴链接<br/>即刻下载
+              </h2>
+              <p className="puzzle-section-text gsap-card-reveal">
+                支持 B站、抖音、快手、西瓜视频等 1000+ 视频平台。
+                只需粘贴视频链接，我们帮你完成剩下的一切。高清画质，极速下载。
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="max-w-3xl mx-auto py-20 px-6">
 
           {/* Section title */}

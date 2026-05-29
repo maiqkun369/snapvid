@@ -217,6 +217,52 @@ html.lenis, html.lenis body {
   min-height: 100vh;
 }
 
+/* ===== Puzzle Intro Section (Wero "WAT IS HET?" style) ===== */
+.puzzle-intro-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.puzzle-section-label {
+  display: flex;
+  align-items: center;
+  font-size: clamp(1rem, 1.2vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.35;
+  margin-bottom: 25px;
+  color: var(--color-text);
+}
+
+.puzzle-section-label span {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.puzzle-section-title {
+  font-size: clamp(1.8rem, 4vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: -1.41px;
+  line-height: 85%;
+  margin-bottom: clamp(1.75rem, 2vw, 2.8rem);
+  color: var(--color-text);
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.puzzle-section-text {
+  font-size: clamp(1rem, 1.2vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.5;
+  max-width: 580px;
+  color: var(--color-text-muted);
+}
+
+/* ===== Parallax floating elements ===== */
+.parallax-float {
+  will-change: transform;
+  opacity: 0;
+}
+
 @keyframes gradient {
   0% { background-position: 50% 50%; }
   25% { background-position: 0% 0%; }
