@@ -90,15 +90,15 @@ function Toolbox() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="shrink-0 pb-4">
-        <h2 className="text-xl font-medium text-white/90">工具箱</h2>
+      <div className="shrink-0 pb-5">
+        <h2 className="text-xl font-semibold text-white/90">工具箱</h2>
         <p className="text-sm text-white/40 mt-1">选择已下载的文件，一键处理</p>
       </div>
 
       <div className="flex-1 flex gap-5 min-h-0">
-        {/* Left: File List */}
-        <div className="w-64 shrink-0 flex flex-col rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/[0.06]">
+        {/* Left: File List — Glass Card */}
+        <div className="w-64 shrink-0 flex flex-col glass rounded-2xl overflow-hidden">
+          <div className="px-4 py-3.5 border-b border-white/[0.06]">
             <p className="text-sm text-white/50 font-medium">我的文件</p>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -108,8 +108,10 @@ function Toolbox() {
               <div
                 key={task.id}
                 onClick={() => selectFile(task)}
-                className={`px-4 py-3 cursor-pointer border-b border-white/[0.03] transition-all ${
-                  selectedTask === task.id ? 'bg-cyan-500/[0.1] border-l-2 border-l-cyan-400' : 'hover:bg-white/[0.03]'
+                className={`px-4 py-3.5 cursor-pointer border-b border-white/[0.04] transition-all duration-200 ${
+                  selectedTask === task.id
+                    ? 'bg-violet-500/[0.08] border-l-2 border-l-violet-400'
+                    : 'hover:bg-white/[0.04] hover:-translate-y-[0.5px]'
                 }`}
               >
                 <p className="text-sm text-white/70 truncate">{task.title || task.filename}</p>
@@ -127,16 +129,16 @@ function Toolbox() {
             </div>
           ) : (
             <>
-              {/* Video Preview + File Info */}
-              <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] overflow-hidden">
+              {/* Video Preview — Glass Card */}
+              <div className="glass rounded-2xl overflow-hidden">
                 <video
                   ref={videoRef}
                   src={`/api/editor/stream/${selectedTask}`}
                   controls
                   preload="metadata"
-                  className="w-full max-h-[240px] object-contain bg-black"
+                  className="w-full max-h-[240px] object-contain bg-black/50 rounded-t-2xl"
                 />
-                <div className="px-4 py-3 flex items-center gap-3 border-t border-white/[0.04]">
+                <div className="px-5 py-3.5 flex items-center gap-3 border-t border-white/[0.06]">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-white/80 truncate font-medium">{selectedTaskInfo?.title || ''}</p>
                     <p className="text-xs text-white/35 mt-0.5">{formatSize(selectedTaskInfo?.filesize)}</p>
@@ -144,7 +146,7 @@ function Toolbox() {
                 </div>
               </div>
 
-              {/* Quick Actions Grid */}
+              {/* Quick Actions Grid — Glass buttons */}
               <div className="space-y-3">
                 <p className="text-sm text-white/40 font-medium">快捷操作</p>
                 <div className="grid grid-cols-4 gap-3">
@@ -159,15 +161,15 @@ function Toolbox() {
                 </div>
               </div>
 
-              {/* Advanced Tools (collapsible) */}
+              {/* Advanced Tools (collapsible) — Glass Panel */}
               <details className="group">
-                <summary className="text-xs text-white/30 cursor-pointer hover:text-white/50 transition-colors list-none flex items-center gap-1">
-                  <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <summary className="text-xs text-white/30 cursor-pointer hover:text-white/50 transition-colors list-none flex items-center gap-1.5 py-1">
+                  <svg className="w-3.5 h-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                   更多工具和配置
                 </summary>
-                <div className="mt-3 space-y-3 pl-4 border-l border-white/[0.06]">
+                <div className="mt-3 glass rounded-2xl p-5 space-y-4">
                   {/* Format convert with options */}
                   <ToolRow label="格式转换" onExecute={() => execute('convert')} disabled={processing}>
                     <select value={convertFormat} onChange={e => setConvertFormat(e.target.value)} className="tool-select">
@@ -237,36 +239,39 @@ function Toolbox() {
 
                   {/* Remove BG */}
                   <ToolRow label="AI去背景" onExecute={() => execute('removebg')} disabled={processing} pro>
-                    <span className="text-[10px] text-white/20">≤30秒片段</span>
+                    <span className="text-xs text-white/20">≤30秒片段</span>
                   </ToolRow>
                 </div>
               </details>
 
               {/* Processing indicator */}
               {processing && (
-                <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-cyan-500/[0.06] border border-cyan-500/20">
-                  <div className="w-4 h-4 border-2 border-cyan-400/40 border-t-cyan-400 rounded-full animate-spin" />
-                  <span className="text-xs text-cyan-300/70">处理中...</span>
+                <div className="flex items-center gap-3 px-5 py-4 glass rounded-2xl border-violet-500/20">
+                  <div className="w-4 h-4 border-2 border-violet-400/40 border-t-violet-400 rounded-full animate-spin" />
+                  <span className="text-sm text-violet-300/70">处理中...</span>
                 </div>
               )}
 
-              {/* Result */}
+              {/* Result — Glass with gradient success */}
               {result && (
-                <div className="p-4 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/20 space-y-3">
-                  <p className="text-sm text-emerald-300/80 font-medium">✓ {result.message}</p>
+                <div className="p-5 rounded-2xl bg-emerald-500/[0.04] border border-emerald-500/[0.15] backdrop-blur-xl space-y-4">
+                  <p className="text-sm text-emerald-300/90 font-medium flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs">✓</span>
+                    {result.message}
+                  </p>
                   {result.registered_task_id && (
                     <p className="text-xs text-cyan-400/60">已加入文件列表，可继续用其他工具处理</p>
                   )}
                   {/* Image preview */}
                   {result.output_filename && result.output_filename.match(/\.(jpg|jpeg|png|webp|gif)$/i) && (
                     <img src={`/api/tools/preview/${encodeURIComponent(result.output_filename)}`} alt=""
-                      className="rounded-lg max-h-[200px] object-contain" />
+                      className="rounded-xl max-h-[200px] object-contain" />
                   )}
                   {/* Summary grid */}
                   {result.summary && (
-                    <div className="grid grid-cols-2 gap-1.5">
+                    <div className="grid grid-cols-2 gap-2">
                       {Object.entries(result.summary).map(([k, v]) => (
-                        <div key={k} className="flex justify-between px-3 py-2 bg-white/[0.03] rounded-lg text-xs">
+                        <div key={k} className="flex justify-between px-3 py-2.5 bg-white/[0.03] rounded-xl text-xs border border-white/[0.04]">
                           <span className="text-white/30">{k}</span>
                           <span className="text-white/60">{v}</span>
                         </div>
@@ -274,14 +279,14 @@ function Toolbox() {
                     </div>
                   )}
                   {/* File info + download */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pt-2">
                     <span className="text-xs text-white/30">
                       {result.output_filename && formatSize(result.output_size)}
                     </span>
                     {result.output_filename && (
                       <a href={`/api/tools/download/${encodeURIComponent(result.output_filename)}`} download
-                        className="text-xs text-white bg-white/10 px-3 py-1.5 rounded-lg hover:bg-white/15 transition-all font-medium">
-                        下载
+                        className="btn-secondary text-xs px-4 py-2">
+                        下载文件
                       </a>
                     )}
                   </div>
@@ -290,33 +295,30 @@ function Toolbox() {
 
               {/* Error */}
               {error && (
-                <div className="px-4 py-3 rounded-xl bg-red-500/[0.06] border border-red-500/20">
-                  <p className="text-xs text-red-300/80">{error}</p>
+                <div className="px-5 py-4 rounded-2xl bg-red-500/[0.04] border border-red-500/[0.12] backdrop-blur-xl">
+                  <p className="text-sm text-red-300/80">{error}</p>
                 </div>
               )}
             </>
           )}
         </div>
       </div>
-
-      <style>{`
-        .tool-select { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: rgba(255,255,255,0.6); outline: none; }
-        .tool-input { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: rgba(255,255,255,0.6); outline: none; }
-      `}</style>
     </div>
   );
 }
 
-// Quick action button component
+// Quick action button component — Glass style
 function QuickAction({ icon, label, onClick, disabled, pro }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]
-        hover:bg-white/[0.05] hover:border-white/[0.12] transition-all disabled:opacity-30 disabled:cursor-not-allowed
-        active:scale-95">
+      className="flex flex-col items-center gap-2 p-3.5 rounded-2xl
+        bg-white/[0.03] border border-white/[0.06] backdrop-blur-xl
+        hover:bg-white/[0.06] hover:border-white/[0.12] hover:-translate-y-[1px]
+        transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed
+        active:scale-[0.97]">
       <span className="text-lg">{icon}</span>
       <span className="text-xs text-white/60">{label}</span>
-      {pro && <span className="text-[10px] text-purple-300/60 -mt-0.5">PRO</span>}
+      {pro && <span className="text-[10px] text-violet-300/60 -mt-0.5">PRO</span>}
     </button>
   );
 }
@@ -324,14 +326,16 @@ function QuickAction({ icon, label, onClick, disabled, pro }) {
 // Tool row with inline config + execute button
 function ToolRow({ label, children, onExecute, disabled, pro }) {
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0">
       <span className="text-sm text-white/60 w-20 shrink-0">{label}</span>
-      {pro && <span className="text-[10px] text-purple-300/50 bg-purple-500/10 px-1.5 py-0.5 rounded">PRO</span>}
+      {pro && <span className="text-[10px] text-violet-300/50 bg-violet-500/10 px-1.5 py-0.5 rounded-md border border-violet-500/10">PRO</span>}
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {children}
       </div>
       <button onClick={onExecute} disabled={disabled}
-        className="text-xs text-white/70 bg-white/[0.06] px-3 py-1.5 rounded-lg hover:bg-white/[0.1] transition-all disabled:opacity-30 shrink-0">
+        className="text-xs text-white/70 bg-white/[0.06] border border-white/[0.08] px-3.5 py-2 rounded-xl
+          hover:bg-white/[0.1] hover:border-white/[0.15] transition-all disabled:opacity-30 shrink-0
+          active:scale-[0.97]">
         执行
       </button>
     </div>

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,40 +7,73 @@
 @layer base {
   body {
     @apply antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'PingFang SC',
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'PingFang SC',
       'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     font-size: 16px;
     line-height: 1.7;
     color: rgba(255, 255, 255, 0.9);
+    background: #0f0f11;
   }
 }
 
 @layer components {
+  /* === Glass Classes === */
+  .glass {
+    @apply bg-white/[0.04] border border-white/[0.08] rounded-[20px]
+      backdrop-blur-xl transition-all duration-300;
+  }
+
+  .glass:hover {
+    @apply bg-white/[0.06] border-white/[0.15];
+  }
+
+  .glass-strong {
+    @apply bg-white/[0.08] border border-white/[0.12] rounded-[20px]
+      backdrop-blur-2xl transition-all duration-300;
+  }
+
+  .glass-strong:hover {
+    @apply bg-white/[0.1] border-white/[0.18];
+  }
+
+  .glass-input {
+    @apply bg-white/[0.06] border border-white/[0.1] rounded-2xl
+      backdrop-blur-xl transition-all duration-300;
+  }
+
+  .glass-input:focus-within {
+    @apply bg-white/[0.08] border-white/[0.2];
+  }
+
+  /* === Button Classes === */
   .btn-primary {
     @apply bg-white text-gray-900 font-semibold
-      py-3.5 px-8 rounded-xl transition-all duration-200 ease-out
+      py-3.5 px-8 rounded-2xl transition-all duration-200 ease-out
       hover:opacity-90 hover:shadow-lg hover:shadow-white/10
       focus:outline-none focus:ring-2 focus:ring-white/30
       disabled:opacity-40 disabled:cursor-not-allowed
-      active:scale-95;
+      active:scale-[0.97];
   }
 
   .btn-secondary {
-    @apply bg-white/10 border border-white/20 text-white font-medium
-      py-3 px-6 rounded-xl transition-all duration-200
-      hover:bg-white/15 hover:border-white/30
-      focus:outline-none focus:ring-2 focus:ring-white/20;
+    @apply bg-white/[0.06] border border-white/[0.1] text-white font-medium
+      py-3 px-6 rounded-2xl backdrop-blur-xl transition-all duration-200
+      hover:bg-white/[0.1] hover:border-white/[0.2]
+      focus:outline-none focus:ring-2 focus:ring-white/20
+      active:scale-[0.97];
   }
 
+  /* === Input Classes === */
   .input-field {
-    @apply w-full bg-white/[0.07] border border-white/[0.12] rounded-xl px-5 py-4
-      text-white text-base placeholder-white/40 focus:outline-none focus:border-white/30
-      focus:bg-white/[0.1] transition-all duration-200;
+    @apply w-full bg-white/[0.06] border border-white/[0.1] rounded-2xl px-5 py-4
+      text-white text-base placeholder-white/30 focus:outline-none focus:border-white/[0.25]
+      focus:bg-white/[0.08] backdrop-blur-xl transition-all duration-300;
   }
 
+  /* === Card Classes === */
   .card {
-    @apply bg-white/[0.04] border border-white/[0.08] rounded-2xl p-7
-      backdrop-blur-sm transition-all duration-200
+    @apply bg-white/[0.04] border border-white/[0.08] rounded-[24px] p-7
+      backdrop-blur-xl transition-all duration-300
       hover:bg-white/[0.06] hover:border-white/[0.12];
   }
 
@@ -47,83 +82,132 @@
   }
 }
 
-/* Aurora Background */
+/* === Animated Background — Two Large Orbs === */
 .animated-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #0a0a0b;
+  background: #0f0f11;
 }
 
 .animated-bg::before {
   content: '';
   position: absolute;
-  width: 150%;
-  height: 150%;
-  top: -25%;
-  left: -25%;
-  background:
-    conic-gradient(from 180deg at 50% 50%,
-      rgba(6, 182, 212, 0.12) 0deg,
-      rgba(139, 92, 246, 0.1) 60deg,
-      rgba(16, 185, 129, 0.06) 120deg,
-      rgba(59, 130, 246, 0.08) 180deg,
-      rgba(168, 85, 247, 0.1) 240deg,
-      rgba(34, 211, 238, 0.08) 300deg,
-      rgba(6, 182, 212, 0.12) 360deg
-    );
+  width: 60vw;
+  height: 60vw;
+  top: -15%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
   filter: blur(80px);
-  animation: auroraRotate 30s linear infinite;
+  animation: orbDriftA 25s ease-in-out infinite alternate;
 }
 
 .animated-bg::after {
   content: '';
   position: absolute;
-  width: 120%;
-  height: 120%;
-  top: -10%;
-  left: -10%;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(56, 189, 248, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 80% 60%, rgba(167, 139, 250, 0.05) 0%, transparent 60%);
-  animation: auroraWave 20s ease-in-out infinite alternate;
+  width: 50vw;
+  height: 50vw;
+  bottom: -10%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
+  filter: blur(80px);
+  animation: orbDriftB 20s ease-in-out infinite alternate;
 }
 
-@keyframes auroraRotate {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.05); }
-  100% { transform: rotate(360deg) scale(1); }
+@keyframes orbDriftA {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(5%, 8%) scale(1.1); }
+  100% { transform: translate(-3%, 4%) scale(0.95); }
 }
 
-@keyframes auroraWave {
-  0% { transform: translateY(0) scale(1); opacity: 0.6; }
-  50% { transform: translateY(-2%) scale(1.03); opacity: 1; }
-  100% { transform: translateY(1%) scale(0.98); opacity: 0.7; }
+@keyframes orbDriftB {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-6%, -5%) scale(1.05); }
+  100% { transform: translate(4%, -8%) scale(0.98); }
 }
 
-/* Smooth entrance */
+/* === Fade Up Animation === */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .fade-up {
   animation: fadeUp 0.5s ease-out forwards;
+  opacity: 0;
 }
 
-/* Grain overlay */
+/* === Grain Overlay (subtle) === */
 .grain-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.012;
+  opacity: 0.015;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
-/* Platform card hover */
+/* === Scrollbar === */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* === Tool Styles === */
+.tool-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.tool-select:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tool-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.tool-input:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* === Platform card hover shimmer === */
 .platform-card {
   position: relative;
   overflow: hidden;
@@ -135,20 +219,14 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent, rgba(255,255,255,0.05));
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent, rgba(255,255,255,0.06));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.3s ease;
 }
 
 .platform-card:hover::before {
   opacity: 1;
 }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }

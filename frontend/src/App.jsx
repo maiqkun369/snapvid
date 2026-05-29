@@ -197,67 +197,71 @@ function App() {
           onNewDownload={() => { window.location.hash = '#/'; }}
         />
       ) : (
-    <div className="min-h-screen relative overflow-hidden bg-[#0a0a0b] text-white">
+    <div className="min-h-screen relative overflow-hidden bg-[#0f0f11] text-white">
 
-      {/* Aurora Background */}
+      {/* Animated Background */}
       <div className="animated-bg" />
       <div className="grain-overlay" />
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-[#0a0a0b]/80 backdrop-blur-md border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <span className="text-base font-semibold text-white/80 tracking-wide">SnapVid</span>
-          <div className="flex items-center gap-6">
-            <a href="#disclaimer" className="text-sm text-white/50 hover:text-white/80 transition-colors">使用须知</a>
-            {user && (
-              <a href="#/dashboard" className="text-sm text-cyan-400/70 hover:text-cyan-300 transition-colors font-medium">控制台</a>
-            )}
-            {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-white/60">
-                  {user.phone || '用户'}
-                </span>
-                {user.plan === 'pro' && (
-                  <span className="text-xs px-2 py-1 rounded-md font-medium bg-purple-500/20 text-purple-300">PRO</span>
-                )}
-                <button onClick={handleLogout} className="text-sm text-white/30 hover:text-white/60 transition-colors">
-                  退出
+      {/* Floating Glass Header */}
+      <header className="fixed top-0 left-0 right-0 z-50">
+        <div className="mx-4 mt-4 px-6 py-3.5 rounded-2xl bg-white/[0.04] backdrop-blur-2xl border border-white/[0.08]
+          shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <a href="#/" className="text-lg font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+              SnapVid
+            </a>
+            <div className="flex items-center gap-4">
+              {user && (
+                <a href="#/dashboard" className="text-sm text-white/60 hover:text-white/90 transition-colors font-medium
+                  px-3 py-1.5 rounded-xl hover:bg-white/[0.06]">
+                  控制台
+                </a>
+              )}
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-white/50">
+                    {user.phone || '用户'}
+                  </span>
+                  {user.plan === 'pro' && (
+                    <span className="text-xs px-2.5 py-1 rounded-lg font-medium
+                      bg-gradient-to-r from-violet-500/20 to-cyan-500/20 border border-violet-400/20
+                      text-violet-300">PRO</span>
+                  )}
+                  <button onClick={handleLogout} className="text-sm text-white/30 hover:text-white/60 transition-colors">
+                    退出
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="text-sm text-white font-medium bg-white/[0.08] hover:bg-white/[0.12]
+                    px-5 py-2 rounded-xl transition-all duration-200 border border-white/[0.1]
+                    hover:border-white/[0.2] active:scale-[0.97]"
+                >
+                  登录
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuth(true)}
-                className="text-sm text-white font-medium bg-white/10 hover:bg-white/15
-                  px-4 py-2 rounded-lg transition-all duration-200 border border-white/10"
-              >
-                登录
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
+        {/* Gradient line at bottom */}
+        <div className="h-[1px] mx-4 bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 pt-32 pb-24">
+      <main className="relative z-10 pt-36 pb-24">
         <div className="max-w-3xl mx-auto px-6">
 
           {/* Hero */}
-          <div className="text-center mb-16 fade-up">
-            <h1 className="text-5xl sm:text-6xl font-medium tracking-tight leading-[1.1] mb-6">
-              <span className="text-white">Your Creative</span>
-              <br />
-              <span className="bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">Backup Tool.</span>
+          <div className="text-center mb-14 fade-up">
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
+              <span className="bg-gradient-to-r from-violet-400 via-purple-300 to-cyan-400 bg-clip-text text-transparent">
+                SnapVid
+              </span>
             </h1>
-            <p className="text-white/60 text-lg mt-6 leading-relaxed max-w-lg mx-auto">
-              安全备份你的原创作品，下载公开授权素材。<br />
-              支持 1000+ 平台，不存储任何内容。
-            </p>
-          </div>
-
-          {/* Compliance Banner */}
-          <div className="mb-10 px-5 py-4 rounded-xl bg-cyan-500/[0.06] border border-cyan-500/[0.12] text-center fade-up">
-            <p className="text-sm text-cyan-200/80">
-              仅支持下载用户自有版权 / CC0 公开授权 / 公共领域内容 · 不存储不缓存不分发 · <a href="mailto:abuse@snapvid.app" className="underline hover:text-cyan-100">侵权投诉</a>
+            <p className="text-white/50 text-lg mt-4 leading-relaxed max-w-md mx-auto font-light">
+              安全备份你的原创作品
             </p>
           </div>
 
@@ -268,15 +272,59 @@ function App() {
 
           {/* Error */}
           {error && (
-            <div className="mt-6 px-5 py-4 rounded-2xl bg-red-500/[0.08] border border-red-500/[0.15] text-red-300/80 text-sm font-light">
-              {error}
+            <div className="mt-6 px-5 py-4 rounded-2xl bg-red-500/[0.06] border border-red-500/[0.12] backdrop-blur-xl">
+              <p className="text-red-300/80 text-sm font-light">{error}</p>
             </div>
           )}
 
-          {/* Video Info */}
+          {/* Combined Video Result Card */}
           {videoInfo && (
             <div className="mt-8 fade-up">
-              <VideoInfo info={videoInfo} />
+              <div className="glass-strong p-6 rounded-[24px]">
+                {/* Video Info Section */}
+                <div className="flex flex-col sm:flex-row gap-5">
+                  {/* Thumbnail */}
+                  {videoInfo.thumbnail && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={videoInfo.thumbnail}
+                        alt={videoInfo.title}
+                        className="w-full sm:w-44 h-auto rounded-xl object-cover bg-white/[0.03]"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+                  {/* Meta */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-white/90 truncate" title={videoInfo.title}>
+                      {videoInfo.title}
+                    </h3>
+                    <div className="mt-3 space-y-2">
+                      {videoInfo.uploader && (
+                        <p className="text-sm text-white/50 flex items-center gap-2">
+                          <span className="text-white/30">作者</span> {videoInfo.uploader}
+                        </p>
+                      )}
+                      {videoInfo.platform && (
+                        <p className="text-sm text-white/50 flex items-center gap-2">
+                          <span className="text-white/30">平台</span> {videoInfo.platform}
+                        </p>
+                      )}
+                      {videoInfo.duration_string && (
+                        <p className="text-sm text-white/50 flex items-center gap-2">
+                          <span className="text-white/30">时长</span> {videoInfo.duration_string}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="my-5 h-[1px] bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+
+                {/* Download Options inline */}
+                <DownloadOptions videoInfo={videoInfo} onDownload={handleDownload} />
+              </div>
             </div>
           )}
 
@@ -288,13 +336,6 @@ function App() {
             />
           )}
 
-          {/* Download Options */}
-          {videoInfo && (
-            <div className="mt-6 fade-up" style={{ animationDelay: '0.15s' }}>
-              <DownloadOptions videoInfo={videoInfo} onDownload={handleDownload} />
-            </div>
-          )}
-
           {/* Progress */}
           {currentTask && (
             <div className="mt-6">
@@ -302,28 +343,23 @@ function App() {
             </div>
           )}
 
-          {/* Go to Dashboard link */}
-          {user && (
-            <div className="mt-8 text-center">
-              <a href="#/dashboard" className="text-sm text-cyan-400/60 hover:text-cyan-300 transition-colors">
-                进入控制台 →
-              </a>
-            </div>
-          )}
+          {/* Platform Support */}
+          <div className="mt-16 text-center fade-up" style={{ animationDelay: '0.2s' }}>
+            <p className="text-xs text-white/25 mb-3 tracking-wider uppercase">支持平台</p>
+            <p className="text-sm text-white/40 font-light">
+              B站 · 抖音 · 快手 · 西瓜视频 · 小红书 · 微博 · 微视 · 好看视频 · 更多
+            </p>
+          </div>
 
         </div>
       </main>
 
-      {/* Footer - compact */}
-      <footer id="disclaimer" className="relative z-10 border-t border-white/[0.06] py-10 mt-12">
-        <div className="max-w-3xl mx-auto px-6 space-y-4">
-          <div className="text-sm text-white/40 leading-relaxed space-y-1.5">
-            <p><strong className="text-white/60">合规声明</strong> — 仅支持下载用户自有版权/CC0/公共领域内容。不存储不缓存不分发。系统自动拦截付费平台内容。用户违规责任自负。</p>
-          </div>
-          <div className="flex items-center justify-between text-xs text-white/25 pt-3 border-t border-white/[0.04]">
-            <span>侵权投诉: abuse@snapvid.app</span>
-            <span>Powered by yt-dlp</span>
-          </div>
+      {/* Footer - ultra minimal */}
+      <footer className="relative z-10 py-8">
+        <div className="max-w-3xl mx-auto px-6">
+          <p className="text-xs text-white/25 text-center leading-relaxed">
+            仅支持下载用户自有版权 / CC0 公开授权 / 公共领域内容 · 不存储不缓存不分发 · 侵权投诉 abuse@snapvid.app
+          </p>
         </div>
       </footer>
     </div>

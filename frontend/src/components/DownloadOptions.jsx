@@ -98,15 +98,15 @@ function DownloadOptions({ videoInfo, onDownload }) {
   };
 
   return (
-    <div className="card space-y-5">
-      <p className="text-xs text-white/30 tracking-widest uppercase">Download Options</p>
-
+    <div className="space-y-5">
       {/* Mode Toggle */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => setAudioOnly(false)}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm transition-all duration-300 ${
-            !audioOnly ? 'bg-white text-gray-900 font-medium' : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.08]'
+            !audioOnly
+              ? 'bg-white text-gray-900 font-medium shadow-lg shadow-white/5'
+              : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.08] border border-white/[0.06]'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,7 +117,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
         <button
           onClick={() => setAudioOnly(true)}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm transition-all duration-300 ${
-            audioOnly ? 'bg-white text-gray-900 font-medium' : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.08]'
+            audioOnly
+              ? 'bg-white text-gray-900 font-medium shadow-lg shadow-white/5'
+              : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.08] border border-white/[0.06]'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,7 +133,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
       {!audioOnly && videoFormats.length > 0 && (
         <div>
           <label className="block text-xs text-white/40 mb-2">画质</label>
-          <select value={selectedFormat} onChange={(e) => setSelectedFormat(e.target.value)} className="input-field text-sm">
+          <select value={selectedFormat} onChange={(e) => setSelectedFormat(e.target.value)}
+            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+              text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
             <option value="best">最佳画质 (自动)</option>
             {videoFormats.map((fmt) => (
               <option key={fmt.format_id} value={fmt.format_id}>
@@ -147,7 +151,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-white/40 mb-2">格式</label>
-            <select value={audioFormat} onChange={(e) => setAudioFormat(e.target.value)} className="input-field text-sm">
+            <select value={audioFormat} onChange={(e) => setAudioFormat(e.target.value)}
+              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
               <option value="mp3">MP3</option>
               <option value="m4a">M4A (AAC)</option>
               <option value="flac">FLAC (无损)</option>
@@ -157,7 +163,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
           </div>
           <div>
             <label className="block text-xs text-white/40 mb-2">质量</label>
-            <select value={audioQuality} onChange={(e) => setAudioQuality(e.target.value)} className="input-field text-sm">
+            <select value={audioQuality} onChange={(e) => setAudioQuality(e.target.value)}
+              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
               <option value="128">128 kbps</option>
               <option value="192">192 kbps</option>
               <option value="256">256 kbps</option>
@@ -171,7 +179,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
       {!audioOnly && (
         <div>
           <label className="block text-xs text-white/40 mb-2">输出格式</label>
-          <select value={outputFormat} onChange={(e) => setOutputFormat(e.target.value)} className="input-field text-sm">
+          <select value={outputFormat} onChange={(e) => setOutputFormat(e.target.value)}
+            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+              text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
             <option value="mp4">MP4 (通用)</option>
             <option value="mkv">MKV (高兼容)</option>
             <option value="webm">WebM</option>
@@ -183,7 +193,8 @@ function DownloadOptions({ videoInfo, onDownload }) {
       <div>
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors
+            px-3 py-1.5 rounded-lg hover:bg-white/[0.04]"
         >
           <svg className={`w-3 h-3 transition-transform duration-200 ${showAdvanced ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -192,12 +203,14 @@ function DownloadOptions({ videoInfo, onDownload }) {
         </button>
 
         {showAdvanced && (
-          <div className="mt-4 space-y-4 pl-4 border-l border-white/[0.06]">
+          <div className="mt-4 space-y-4 pl-4 border-l-2 border-white/[0.06]">
             {/* Subtitles */}
             {videoInfo.subtitles && videoInfo.subtitles.length > 0 && (
               <div>
                 <label className="block text-xs text-white/40 mb-2">字幕</label>
-                <select value={subtitles} onChange={(e) => setSubtitles(e.target.value)} className="input-field text-sm">
+                <select value={subtitles} onChange={(e) => setSubtitles(e.target.value)}
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
                   <option value="">不下载字幕</option>
                   {videoInfo.subtitles.map((lang) => (
                     <option key={lang} value={lang}>{lang}</option>
@@ -220,19 +233,22 @@ function DownloadOptions({ videoInfo, onDownload }) {
             {playlist && (
               <input
                 type="text" value={playlistRange} onChange={(e) => setPlaylistRange(e.target.value)}
-                placeholder="范围 (如 1:5 表示第1-5集)" className="input-field text-sm"
-              />
+                placeholder="范围 (如 1:5 表示第1-5集)"
+                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                  text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
             )}
 
             {/* Rate Limit */}
             <div>
               <label className="block text-xs text-white/40 mb-2">限速 (MB/s)</label>
               <input type="number" value={rateLimit} onChange={(e) => setRateLimit(e.target.value)}
-                placeholder="留空不限速" min="0.1" step="0.1" className="input-field text-sm w-40" />
+                placeholder="留空不限速" min="0.1" step="0.1"
+                className="w-40 bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                  text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
             </div>
 
             {/* Embed options */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <label className="flex items-center gap-2 text-xs text-white/50">
                 <input type="checkbox" checked={embedThumbnail} onChange={(e) => setEmbedThumbnail(e.target.checked)} className="rounded" />
                 嵌入封面图
@@ -259,18 +275,18 @@ function DownloadOptions({ videoInfo, onDownload }) {
               </label>
             )}
 
-            {/* Proxy - hidden from UI, use env var instead */}
-
             {/* === Useful Advanced Features === */}
-            <div className="pt-3 mt-3 border-t border-white/[0.04] space-y-3">
+            <div className="pt-3 mt-3 border-t border-white/[0.06] space-y-4">
               <p className="text-xs text-white/30 tracking-widest uppercase">进阶功能</p>
 
               {/* Video section clip */}
               <div>
                 <label className="block text-xs text-white/40 mb-2">片段截取 (起止时间)</label>
                 <input type="text" value={downloadSections} onChange={(e) => setDownloadSections(e.target.value)}
-                  placeholder="如 00:01:00-00:02:30" className="input-field text-sm" />
-                <p className="text-[10px] text-white/20 mt-1">留空下载完整视频，填入时间范围仅下载该片段</p>
+                  placeholder="如 00:01:00-00:02:30"
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
+                <p className="text-[11px] text-white/20 mt-1.5">留空下载完整视频，填入时间范围仅下载该片段</p>
               </div>
 
               {/* Concurrent fragments */}
@@ -279,18 +295,22 @@ function DownloadOptions({ videoInfo, onDownload }) {
                 <div className="flex items-center gap-3">
                   <input type="range" min="1" max="16" value={concurrentFragments}
                     onChange={(e) => setConcurrentFragments(parseInt(e.target.value))}
-                    className="flex-1 h-1.5 bg-white/[0.08] rounded-full appearance-none cursor-pointer" />
+                    className="flex-1 h-1.5 bg-white/[0.08] rounded-full appearance-none cursor-pointer
+                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+                      [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg" />
                   <span className="text-xs text-white/50 w-8 text-right">{concurrentFragments}x</span>
                 </div>
                 {concurrentFragments > 1 && (
-                  <p className="text-[10px] text-purple-300/50 mt-1">PRO · {concurrentFragments} 线程并发</p>
+                  <p className="text-[11px] text-violet-300/50 mt-1.5">PRO · {concurrentFragments} 线程并发</p>
                 )}
               </div>
 
               {/* Remux format conversion */}
               <div>
                 <label className="block text-xs text-white/40 mb-2">格式转换</label>
-                <select value={remuxFormat} onChange={(e) => setRemuxFormat(e.target.value)} className="input-field text-sm">
+                <select value={remuxFormat} onChange={(e) => setRemuxFormat(e.target.value)}
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
                   <option value="">不转换</option>
                   <option value="mp4">转为 MP4</option>
                   <option value="mkv">转为 MKV</option>
@@ -302,7 +322,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
               {/* Quality preference */}
               <div>
                 <label className="block text-xs text-white/40 mb-2">画质偏好</label>
-                <select value={formatSort} onChange={(e) => setFormatSort(e.target.value)} className="input-field text-sm">
+                <select value={formatSort} onChange={(e) => setFormatSort(e.target.value)}
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
+                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
                   <option value="">默认 (最佳画质)</option>
                   <option value="res:1080">优先 1080P</option>
                   <option value="res:720">优先 720P (省流量)</option>
@@ -315,20 +337,20 @@ function DownloadOptions({ videoInfo, onDownload }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <button onClick={() => handleDownload(false)}
-          className="flex-1 bg-white text-gray-900 font-medium py-3.5 rounded-xl
+          className="flex-1 bg-white text-gray-900 font-semibold py-3.5 rounded-2xl
             flex items-center justify-center gap-2 transition-all duration-300
-            hover:scale-[1.01] hover:shadow-lg hover:shadow-white/5 active:scale-[0.99]">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            hover:shadow-lg hover:shadow-white/10 active:scale-[0.97]">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
           开始下载
         </button>
         <button onClick={() => handleDownload(true)}
-          className="px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.1]
-            text-white/60 text-sm transition-all duration-200
-            hover:bg-white/[0.1] hover:text-white/80 active:scale-[0.98]"
+          className="px-4 py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1]
+            text-white/60 text-sm transition-all duration-300 backdrop-blur-xl
+            hover:bg-white/[0.1] hover:border-white/[0.18] active:scale-[0.97]"
           title="仅下载封面图"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,20 +361,20 @@ function DownloadOptions({ videoInfo, onDownload }) {
 
       {/* Description/Copywriting extract */}
       {videoInfo.description && (
-        <div className="pt-3 border-t border-white/[0.04]">
+        <div className="pt-4 border-t border-white/[0.06]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] text-white/25 tracking-widest uppercase">Video Description</span>
+            <span className="text-xs text-white/25 tracking-wider">视频描述</span>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(videoInfo.description);
                 alert('文案已复制到剪贴板');
               }}
-              className="text-[11px] text-cyan-400/60 hover:text-cyan-300 transition-colors"
+              className="text-xs text-violet-400/60 hover:text-violet-300 transition-colors"
             >
               复制文案
             </button>
           </div>
-          <p className="text-[11px] text-white/30 leading-relaxed line-clamp-3">
+          <p className="text-xs text-white/30 leading-relaxed line-clamp-3">
             {videoInfo.description.slice(0, 200)}{videoInfo.description.length > 200 ? '...' : ''}
           </p>
         </div>

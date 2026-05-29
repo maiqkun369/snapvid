@@ -17,46 +17,61 @@ function Dashboard({ user, onLogout, onNewDownload }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-white flex flex-col">
-      {/* Dashboard Header */}
-      <header className="px-6 py-4 bg-[#0a0a0b]/95 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between z-40">
-        <div className="flex items-center gap-4">
-          <a href="#/" className="text-base font-semibold text-white/80 tracking-wide hover:text-white transition-colors">
-            SnapVid
-          </a>
-          <span className="text-xs text-white/20">|</span>
-          <span className="text-sm text-white/40">控制台</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onNewDownload}
-            className="text-sm text-white font-medium bg-gradient-to-r from-cyan-500/20 to-purple-500/20
-              border border-cyan-400/30 px-4 py-2 rounded-lg hover:from-cyan-500/30 hover:to-purple-500/30 transition-all"
-          >
-            + 新建下载
-          </button>
-          <span className="text-sm text-white/50">{user?.phone || '用户'}</span>
-          {user?.plan === 'pro' && (
-            <span className="text-xs px-2 py-1 rounded-md font-medium bg-purple-500/20 text-purple-300">PRO</span>
-          )}
-          <button onClick={onLogout} className="text-sm text-white/30 hover:text-white/60 transition-colors">退出</button>
+    <div className="min-h-screen bg-[#0f0f11] text-white flex flex-col">
+      {/* Animated Background (subtle for dashboard) */}
+      <div className="animated-bg opacity-50" />
+
+      {/* Dashboard Header — Glass */}
+      <header className="relative z-40 px-6 py-4">
+        <div className="flex items-center justify-between glass-strong rounded-2xl px-6 py-3.5">
+          <div className="flex items-center gap-4">
+            <a href="#/" className="text-lg font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+              SnapVid
+            </a>
+            <div className="w-[1px] h-4 bg-white/10" />
+            <span className="text-sm text-white/40 font-medium">控制台</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onNewDownload}
+              className="text-sm text-white font-medium
+                bg-gradient-to-r from-violet-500/20 to-cyan-500/20
+                border border-violet-400/25 px-4 py-2 rounded-xl
+                hover:from-violet-500/30 hover:to-cyan-500/30 hover:border-violet-400/40
+                transition-all duration-300 active:scale-[0.97]"
+            >
+              + 新建下载
+            </button>
+            <span className="text-sm text-white/40">{user?.phone || '用户'}</span>
+            {user?.plan === 'pro' && (
+              <span className="text-xs px-2.5 py-1 rounded-lg font-medium
+                bg-gradient-to-r from-violet-500/20 to-cyan-500/20 border border-violet-400/20
+                text-violet-300">PRO</span>
+            )}
+            <button onClick={onLogout} className="text-sm text-white/30 hover:text-white/60 transition-colors">退出</button>
+          </div>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-56 border-r border-white/[0.06] py-4 flex-shrink-0 hidden sm:block">
-          <nav className="space-y-1 px-3">
+      <div className="flex flex-1 overflow-hidden relative z-10">
+        {/* Sidebar — Glass */}
+        <aside className="w-56 flex-shrink-0 hidden sm:block p-4 pr-0">
+          <nav className="glass rounded-2xl p-3 space-y-1 h-full">
             {panels.map((panel) => (
               <button
                 key={panel.id}
                 onClick={() => setActivePanel(panel.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 relative ${
                   activePanel === panel.id
                     ? 'bg-white/[0.08] text-white font-medium'
                     : 'text-white/50 hover:bg-white/[0.04] hover:text-white/70'
                 }`}
               >
+                {/* Active indicator — gradient left bar */}
+                {activePanel === panel.id && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full
+                    bg-gradient-to-b from-violet-400 to-cyan-400" />
+                )}
                 <span className="text-base">{panel.icon}</span>
                 {panel.label}
               </button>
@@ -64,15 +79,17 @@ function Dashboard({ user, onLogout, onNewDownload }) {
           </nav>
         </aside>
 
-        {/* Mobile tab bar */}
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0b]/95 backdrop-blur-md border-t border-white/[0.06] z-40">
-          <div className="flex justify-around py-2">
+        {/* Mobile tab bar — Glass */}
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 p-3">
+          <div className="flex justify-around py-2.5 glass-strong rounded-2xl">
             {panels.map((panel) => (
               <button
                 key={panel.id}
                 onClick={() => setActivePanel(panel.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 ${
-                  activePanel === panel.id ? 'text-white' : 'text-white/40'
+                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${
+                  activePanel === panel.id
+                    ? 'text-white bg-white/[0.08]'
+                    : 'text-white/40'
                 }`}
               >
                 <span className="text-lg">{panel.icon}</span>
