@@ -35,7 +35,17 @@ function App() {
   const [route, setRoute] = useState(window.location.hash === '#/dashboard' ? 'dashboard' : 'home');
 
   useEffect(() => {
-    const handleHash = () => setRoute(window.location.hash === '#/dashboard' ? 'dashboard' : 'home');
+    const handleHash = () => {
+      const newRoute = window.location.hash === '#/dashboard' ? 'dashboard' : 'home';
+      setRoute(newRoute);
+      // Clear video state when navigating back to home
+      if (newRoute === 'home') {
+        setVideoInfo(null);
+        setBatchResults(null);
+        setError('');
+        setCurrentTask(null);
+      }
+    };
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
@@ -53,6 +63,7 @@ function App() {
   const heroTitleRef = useRef(null);
   const contentRef = useRef(null);
   const ctaRef = useRef(null);
+  const curvesRef = useRef(null);
 
   const handleParse = useCallback(async (url) => {
     const token = localStorage.getItem('snapvid_token') || '';
@@ -243,6 +254,71 @@ function App() {
           },
         });
       });
+
+      // --- Organic Curves Decoration Parallax (Wero transition style) ---
+      if (curvesRef.current) {
+        const curvePaths = curvesRef.current.querySelectorAll('.curve-path');
+        const puzzleBlocks = curvesRef.current.querySelectorAll('.puzzle-block-3d');
+        const sparkles = curvesRef.current.querySelectorAll('.sparkle-star');
+
+        // Entire decoration layer shifts up with scroll
+        gsap.to(curvesRef.current, {
+          y: -120,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1.5,
+          },
+        });
+
+        // Individual curve paths move at different speeds
+        curvePaths.forEach((path, i) => {
+          gsap.to(path, {
+            y: -40 - i * 25,
+            x: 15 + i * 10,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: heroRef.current,
+              start: 'top top',
+              end: 'bottom top',
+              scrub: 1 + i * 0.4,
+            },
+          });
+        });
+
+        // Puzzle blocks float at different rates
+        puzzleBlocks.forEach((block, i) => {
+          gsap.to(block, {
+            y: -60 - i * 30,
+            rotation: 5 - i * 3,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: heroRef.current,
+              start: 'top top',
+              end: 'bottom top',
+              scrub: 1.2 + i * 0.5,
+            },
+          });
+        });
+
+        // Sparkle stars drift at their own pace
+        sparkles.forEach((star, i) => {
+          gsap.to(star, {
+            y: -30 - i * 20,
+            rotation: 45 + i * 15,
+            scale: 1.1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: heroRef.current,
+              start: 'top top',
+              end: 'bottom top',
+              scrub: 0.8 + i * 0.6,
+            },
+          });
+        });
+      }
 
       // --- Content Over Hero: Parallax slide-up (exact Wero: content floats up over hero) ---
       if (contentRef.current) {
@@ -498,6 +574,265 @@ function App() {
         </div>
       </section>
 
+      {/* === ORGANIC CURVES DECORATION (Wero transition style) === */}
+      <div className="curves-decoration" ref={curvesRef}>
+        {/* Main SVG with organic flowing tube curves */}
+        <svg
+          className="curves-svg"
+          viewBox="0 0 1440 800"
+          preserveAspectRatio="xMidYMid slice"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Gradient definitions for tube fills */}
+          <defs>
+            <linearGradient id="curveGrad1" x1="0%" y1="0%" x2="100%" y2="50%">
+              <stop offset="0%" stopColor="#FFF48D" />
+              <stop offset="50%" stopColor="#FDAD70" />
+              <stop offset="100%" stopColor="#FD97FD" />
+            </linearGradient>
+            <linearGradient id="curveGrad2" x1="0%" y1="30%" x2="100%" y2="70%">
+              <stop offset="0%" stopColor="#FDAD70" />
+              <stop offset="60%" stopColor="#FF6B9D" />
+              <stop offset="100%" stopColor="#FD97FD" />
+            </linearGradient>
+            <linearGradient id="curveGrad3" x1="10%" y1="0%" x2="90%" y2="100%">
+              <stop offset="0%" stopColor="#FFF48D" />
+              <stop offset="100%" stopColor="#FF8C42" />
+            </linearGradient>
+            <linearGradient id="curveGrad4" x1="0%" y1="50%" x2="100%" y2="50%">
+              <stop offset="0%" stopColor="#FFD166" />
+              <stop offset="50%" stopColor="#FDAD70" />
+              <stop offset="100%" stopColor="#FD74FD" />
+            </linearGradient>
+            <linearGradient id="curveGrad5" x1="20%" y1="0%" x2="80%" y2="100%">
+              <stop offset="0%" stopColor="#FD97FD" />
+              <stop offset="50%" stopColor="#FDAD70" />
+              <stop offset="100%" stopColor="#FFF48D" />
+            </linearGradient>
+            <linearGradient id="puzzleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#7AF7F7" />
+              <stop offset="100%" stopColor="#83F582" />
+            </linearGradient>
+            <linearGradient id="puzzleGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#83F582" />
+              <stop offset="100%" stopColor="#4ECDC4" />
+            </linearGradient>
+            {/* Drop shadow filter for puzzle blocks */}
+            <filter id="puzzleShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="3" dy="5" stdDeviation="4" floodColor="#1D1C1C" floodOpacity="0.2" />
+            </filter>
+          </defs>
+
+          {/* Curve 1: Large sweeping arc from bottom-left to upper-right */}
+          <path
+            className="curve-path"
+            d="M-80 700 C200 650, 350 350, 600 300 C850 250, 1000 450, 1200 200 C1350 50, 1400 100, 1540 50"
+            fill="none"
+            stroke="url(#curveGrad1)"
+            strokeWidth="28"
+            strokeLinecap="round"
+          />
+          <path
+            className="curve-path"
+            d="M-80 700 C200 650, 350 350, 600 300 C850 250, 1000 450, 1200 200 C1350 50, 1400 100, 1540 50"
+            fill="none"
+            stroke="#1D1C1C"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+
+          {/* Curve 2: Mid-level wave flowing right to left */}
+          <path
+            className="curve-path"
+            d="M-50 500 C150 420, 300 550, 500 480 C700 410, 850 600, 1050 520 C1250 440, 1350 350, 1550 400"
+            fill="none"
+            stroke="url(#curveGrad2)"
+            strokeWidth="24"
+            strokeLinecap="round"
+          />
+          <path
+            className="curve-path"
+            d="M-50 500 C150 420, 300 550, 500 480 C700 410, 850 600, 1050 520 C1250 440, 1350 350, 1550 400"
+            fill="none"
+            stroke="#1D1C1C"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+
+          {/* Curve 3: Deeper curve crossing over curve 1 */}
+          <path
+            className="curve-path"
+            d="M-100 350 C100 300, 250 600, 480 550 C710 500, 900 200, 1100 350 C1300 500, 1400 250, 1560 300"
+            fill="none"
+            stroke="url(#curveGrad3)"
+            strokeWidth="22"
+            strokeLinecap="round"
+          />
+          <path
+            className="curve-path"
+            d="M-100 350 C100 300, 250 600, 480 550 C710 500, 900 200, 1100 350 C1300 500, 1400 250, 1560 300"
+            fill="none"
+            stroke="#1D1C1C"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+
+          {/* Curve 4: Tight lower S-curve */}
+          <path
+            className="curve-path"
+            d="M-60 650 C200 580, 400 750, 650 680 C900 610, 1050 730, 1300 660 C1420 630, 1480 700, 1560 680"
+            fill="none"
+            stroke="url(#curveGrad4)"
+            strokeWidth="20"
+            strokeLinecap="round"
+          />
+          <path
+            className="curve-path"
+            d="M-60 650 C200 580, 400 750, 650 680 C900 610, 1050 730, 1300 660 C1420 630, 1480 700, 1560 680"
+            fill="none"
+            stroke="#1D1C1C"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+
+          {/* Curve 5: Top accent curve */}
+          <path
+            className="curve-path"
+            d="M-40 200 C180 150, 320 350, 550 280 C780 210, 950 100, 1150 180 C1350 260, 1450 150, 1560 120"
+            fill="none"
+            stroke="url(#curveGrad5)"
+            strokeWidth="18"
+            strokeLinecap="round"
+          />
+          <path
+            className="curve-path"
+            d="M-40 200 C180 150, 320 350, 550 280 C780 210, 950 100, 1150 180 C1350 260, 1450 150, 1560 120"
+            fill="none"
+            stroke="#1D1C1C"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {/* 3D Puzzle Blocks */}
+        <div className="puzzle-block-3d puzzle-block-1">
+          <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+            {/* Main block face */}
+            <path
+              d="M10 30 L60 10 L110 30 L110 70 L60 90 L10 70 Z"
+              fill="url(#puzzleGrad1Inline)"
+              stroke="#1D1C1C"
+              strokeWidth="2"
+            />
+            {/* Top face (3D effect) */}
+            <path
+              d="M10 30 L60 10 L110 30 L60 50 Z"
+              fill="#7AF7F7"
+              stroke="#1D1C1C"
+              strokeWidth="2"
+              opacity="0.8"
+            />
+            {/* Right face (darker for depth) */}
+            <path
+              d="M110 30 L110 70 L60 90 L60 50 Z"
+              fill="#4ECDC4"
+              stroke="#1D1C1C"
+              strokeWidth="2"
+              opacity="0.7"
+            />
+            {/* Puzzle connector bump */}
+            <circle cx="60" cy="10" r="8" fill="#83F582" stroke="#1D1C1C" strokeWidth="1.5" />
+            {/* Puzzle connector indent */}
+            <circle cx="10" cy="50" r="6" fill="#FAFAF9" stroke="#1D1C1C" strokeWidth="1.5" />
+            <defs>
+              <linearGradient id="puzzleGrad1Inline" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#83F582" />
+                <stop offset="100%" stopColor="#7AF7F7" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div className="puzzle-block-3d puzzle-block-2">
+          <svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
+            {/* Main block face */}
+            <path
+              d="M10 25 L50 8 L90 25 L90 60 L50 77 L10 60 Z"
+              fill="#4ECDC4"
+              stroke="#1D1C1C"
+              strokeWidth="2"
+            />
+            {/* Top face */}
+            <path
+              d="M10 25 L50 8 L90 25 L50 42 Z"
+              fill="#7AF7F7"
+              stroke="#1D1C1C"
+              strokeWidth="2"
+              opacity="0.85"
+            />
+            {/* Right face */}
+            <path
+              d="M90 25 L90 60 L50 77 L50 42 Z"
+              fill="#3DA8A0"
+              stroke="#1D1C1C"
+              strokeWidth="2"
+              opacity="0.7"
+            />
+            {/* Puzzle bump on top */}
+            <circle cx="50" cy="8" r="7" fill="#83F582" stroke="#1D1C1C" strokeWidth="1.5" />
+          </svg>
+        </div>
+
+        {/* Sparkle Stars */}
+        <div className="sparkle-star sparkle-1">
+          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M20 2 L23 15 L36 15 L25 23 L29 37 L20 28 L11 37 L15 23 L4 15 L17 15 Z"
+              fill="white"
+              stroke="#1D1C1C"
+              strokeWidth="1"
+            />
+          </svg>
+        </div>
+        <div className="sparkle-star sparkle-2">
+          <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+            {/* Four-pointed star (cross + rotated) */}
+            <path
+              d="M15 0 L17 12 L30 15 L17 18 L15 30 L13 18 L0 15 L13 12 Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+        <div className="sparkle-star sparkle-3">
+          <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M18 0 L20.5 14 L36 18 L20.5 22 L18 36 L15.5 22 L0 18 L15.5 14 Z"
+              fill="white"
+              stroke="#1D1C1C"
+              strokeWidth="0.5"
+            />
+          </svg>
+        </div>
+        <div className="sparkle-star sparkle-4">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 0 L14 9 L24 12 L14 15 L12 24 L10 15 L0 12 L10 9 Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+        <div className="sparkle-star sparkle-5">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M16 0 L18.5 12 L32 16 L18.5 20 L16 32 L13.5 20 L0 16 L13.5 12 Z"
+              fill="white"
+              stroke="#1D1C1C"
+              strokeWidth="0.8"
+            />
+          </svg>
+        </div>
+      </div>
+
       {/* === MAIN CONTENT (scrolls over hero with parallax) === */}
       <section className="content-over-hero" ref={contentRef}>
 
@@ -572,7 +907,12 @@ function App() {
               <div className="card">
                 <div className="flex gap-5">
                   {videoInfo.thumbnail && (
-                    <img src={videoInfo.thumbnail} alt="" className="w-44 h-28 object-cover rounded-xl shrink-0 border-2 border-[#1D1C1C]" />
+                    <img 
+                      src={videoInfo.thumbnail} 
+                      alt="" 
+                      className="w-44 h-28 object-cover rounded-xl shrink-0 border-2 border-[#1D1C1C]" 
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
                   )}
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-black text-[#1D1C1C] truncate">{videoInfo.title}</h3>
@@ -634,7 +974,6 @@ function App() {
       {/* === BOTTOM FLOATING NAV (Wero style, GSAP entrance) === */}
       <nav className="bottom-nav" style={{ opacity: 0 }}>
         <a href="#features" className="active">下载</a>
-        <a href="#platforms">平台</a>
         {user && <a href="#/dashboard">控制台</a>}
         {!user && <button onClick={() => setShowAuth(true)}>登录</button>}
       </nav>

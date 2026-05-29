@@ -431,12 +431,21 @@ class DownloaderService:
         loop = asyncio.get_event_loop()
         self._active_loops[task_id] = loop
 
+        # Send initial status so frontend knows the task is active
+        await self._send_progress(task_id, {
+            "progress": 0.0,
+            "speed": "",
+            "eta": "解析中...",
+            "status": "downloading",
+        })
+
         # Build yt-dlp options
         output_template = str(DOWNLOADS_DIR / f"{task_id}_%(title)s.%(ext)s")
         ydl_opts: dict = {
             "outtmpl": output_template,
             "quiet": True,
             "no_warnings": True,
+            "socket_timeout": 30,
             "progress_hooks": [lambda d: self._sync_progress_hook(task_id, d)],
             "http_headers": {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -573,7 +582,7 @@ class DownloaderService:
 
         # Download archive (skip already downloaded)
         if request.use_archive:
-            archive_path = Path("/app/data/download_archive.txt")
+            archive_path = DOWNLOADS_DIR / "download_archive.txt"
             archive_path.parent.mkdir(parents=True, exist_ok=True)
             ydl_opts["download_archive"] = str(archive_path)
 
@@ -724,11 +733,19 @@ class DownloaderService:
         """Execute the actual download."""
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
+                # First extract info to get title early
+                info = ydl.extract_info(url, download=False)
                 if info:
                     task = self._tasks.get(task_id)
                     if task:
                         task.title = info.get("title", "未知标题")
+
+                # Now do the actual download
+                info = ydl.extract_info(url, download=True)
+                if info:
+                    task = self._tasks.get(task_id)
+                    if task:
+                        task.title = info.get("title", task.title)
 
                     # Save comments if extracted
                     comments = info.get("comments", [])

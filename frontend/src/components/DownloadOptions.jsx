@@ -16,27 +16,10 @@ function DownloadOptions({ videoInfo, onDownload }) {
   const [splitChapters, setSplitChapters] = useState(false);
   const [sponsorBlock, setSponsorBlock] = useState(false);
   const [outputFormat, setOutputFormat] = useState('mp4');
-  const [proxy, setProxy] = useState('');
-  // New features
   const [concurrentFragments, setConcurrentFragments] = useState(1);
   const [downloadSections, setDownloadSections] = useState('');
-  const [outputTemplate, setOutputTemplate] = useState('');
   const [remuxFormat, setRemuxFormat] = useState('');
-  // Roadmap features
-  const [writeComments, setWriteComments] = useState(false);
-  const [useArchive, setUseArchive] = useState(true);
-  const [safeMode, setSafeMode] = useState(false);
-  const [playlistRandom, setPlaylistRandom] = useState(false);
-  const [filterDurationMin, setFilterDurationMin] = useState('');
-  const [filterDurationMax, setFilterDurationMax] = useState('');
-  const [maxFilesize, setMaxFilesize] = useState('');
-  const [minFilesize, setMinFilesize] = useState('');
-  const [dateAfter, setDateAfter] = useState('');
-  const [dateBefore, setDateBefore] = useState('');
   const [formatSort, setFormatSort] = useState('');
-  const [geoBypassCountry, setGeoBypassCountry] = useState('');
-  const [convertSubsFormat, setConvertSubsFormat] = useState('');
-  const [convertThumbnailFormat, setConvertThumbnailFormat] = useState('');
 
   const { videoFormats, audioFormats } = useMemo(() => {
     const formats = videoInfo?.formats || [];
@@ -73,40 +56,24 @@ function DownloadOptions({ videoInfo, onDownload }) {
       split_chapters: splitChapters,
       sponsor_block: sponsorBlock,
       output_format: outputFormat,
-      proxy: proxy || null,
       concurrent_fragments: concurrentFragments,
       download_sections: downloadSections || null,
-      output_template: outputTemplate || null,
       thumbnail_only: thumbnailOnly,
       remux_format: remuxFormat || null,
-      // Roadmap features
-      write_comments: writeComments,
-      use_archive: useArchive,
-      safe_mode: safeMode,
-      playlist_random: playlistRandom,
-      filter_duration_min: filterDurationMin ? parseInt(filterDurationMin) : null,
-      filter_duration_max: filterDurationMax ? parseInt(filterDurationMax) : null,
-      max_filesize: maxFilesize || null,
-      min_filesize: minFilesize || null,
-      date_after: dateAfter || null,
-      date_before: dateBefore || null,
       format_sort: formatSort || null,
-      geo_bypass_country: geoBypassCountry || null,
-      convert_subs_format: convertSubsFormat || null,
-      convert_thumbnail_format: convertThumbnailFormat || null,
     });
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Mode Toggle */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => setAudioOnly(false)}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm transition-all duration-300 ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 border-2 ${
             !audioOnly
-              ? 'bg-white text-gray-900 font-medium shadow-lg shadow-white/5'
-              : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.08] border border-white/[0.06]'
+              ? 'bg-[#1D1C1C] text-white border-[#1D1C1C]'
+              : 'bg-white text-[#1D1C1C] border-[#1D1C1C] hover:bg-gray-50'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,10 +83,10 @@ function DownloadOptions({ videoInfo, onDownload }) {
         </button>
         <button
           onClick={() => setAudioOnly(true)}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm transition-all duration-300 ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 border-2 ${
             audioOnly
-              ? 'bg-white text-gray-900 font-medium shadow-lg shadow-white/5'
-              : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.08] border border-white/[0.06]'
+              ? 'bg-[#1D1C1C] text-white border-[#1D1C1C]'
+              : 'bg-white text-[#1D1C1C] border-[#1D1C1C] hover:bg-gray-50'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,10 +99,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
       {/* Video Format Selection */}
       {!audioOnly && videoFormats.length > 0 && (
         <div>
-          <label className="block text-xs text-white/40 mb-2">画质</label>
+          <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">画质</label>
           <select value={selectedFormat} onChange={(e) => setSelectedFormat(e.target.value)}
-            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-              text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
+            className="tool-select w-full py-2 px-3">
             <option value="best">最佳画质 (自动)</option>
             {videoFormats.map((fmt) => (
               <option key={fmt.format_id} value={fmt.format_id}>
@@ -150,10 +116,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
       {audioOnly && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-white/40 mb-2">格式</label>
+            <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">格式</label>
             <select value={audioFormat} onChange={(e) => setAudioFormat(e.target.value)}
-              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
+              className="tool-select w-full py-2 px-3">
               <option value="mp3">MP3</option>
               <option value="m4a">M4A (AAC)</option>
               <option value="flac">FLAC (无损)</option>
@@ -162,10 +127,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-white/40 mb-2">质量</label>
+            <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">质量</label>
             <select value={audioQuality} onChange={(e) => setAudioQuality(e.target.value)}
-              className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
+              className="tool-select w-full py-2 px-3">
               <option value="128">128 kbps</option>
               <option value="192">192 kbps</option>
               <option value="256">256 kbps</option>
@@ -178,10 +142,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
       {/* Video container format */}
       {!audioOnly && (
         <div>
-          <label className="block text-xs text-white/40 mb-2">输出格式</label>
+          <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">输出格式</label>
           <select value={outputFormat} onChange={(e) => setOutputFormat(e.target.value)}
-            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-              text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
+            className="tool-select w-full py-2 px-3">
             <option value="mp4">MP4 (通用)</option>
             <option value="mkv">MKV (高兼容)</option>
             <option value="webm">WebM</option>
@@ -189,12 +152,11 @@ function DownloadOptions({ videoInfo, onDownload }) {
         </div>
       )}
 
-      {/* Advanced Options */}
+      {/* Advanced Options Toggle */}
       <div>
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors
-            px-3 py-1.5 rounded-lg hover:bg-white/[0.04]"
+          className="flex items-center gap-2 text-xs font-bold text-[#4A4A4A] hover:text-[#1D1C1C] transition-colors"
         >
           <svg className={`w-3 h-3 transition-transform duration-200 ${showAdvanced ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -203,22 +165,21 @@ function DownloadOptions({ videoInfo, onDownload }) {
         </button>
 
         {showAdvanced && (
-          <div className="mt-4 space-y-4 pl-4 border-l-2 border-white/[0.06]">
+          <div className="mt-3 space-y-3 pl-3 border-l-2 border-[#E8E8E8]">
             {/* Subtitles */}
             {videoInfo.subtitles && videoInfo.subtitles.length > 0 && (
               <div>
-                <label className="block text-xs text-white/40 mb-2">字幕</label>
+                <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">字幕</label>
                 <select value={subtitles} onChange={(e) => setSubtitles(e.target.value)}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
+                  className="tool-select w-full py-2 px-3">
                   <option value="">不下载字幕</option>
                   {videoInfo.subtitles.map((lang) => (
                     <option key={lang} value={lang}>{lang}</option>
                   ))}
                 </select>
                 {subtitles && (
-                  <label className="flex items-center gap-2 mt-2 text-xs text-white/40">
-                    <input type="checkbox" checked={embedSubtitles} onChange={(e) => setEmbedSubtitles(e.target.checked)} className="rounded" />
+                  <label className="flex items-center gap-2 mt-2 text-xs font-medium text-[#4A4A4A]">
+                    <input type="checkbox" checked={embedSubtitles} onChange={(e) => setEmbedSubtitles(e.target.checked)} className="rounded border-[#1D1C1C]" />
                     嵌入字幕到视频文件
                   </label>
                 )}
@@ -226,91 +187,84 @@ function DownloadOptions({ videoInfo, onDownload }) {
             )}
 
             {/* Playlist */}
-            <label className="flex items-center gap-2 text-xs text-white/50">
-              <input type="checkbox" checked={playlist} onChange={(e) => setPlaylist(e.target.checked)} className="rounded" />
+            <label className="flex items-center gap-2 text-xs font-medium text-[#4A4A4A]">
+              <input type="checkbox" checked={playlist} onChange={(e) => setPlaylist(e.target.checked)} className="rounded border-[#1D1C1C]" />
               下载整个播放列表
             </label>
             {playlist && (
               <input
                 type="text" value={playlistRange} onChange={(e) => setPlaylistRange(e.target.value)}
                 placeholder="范围 (如 1:5 表示第1-5集)"
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                  text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
+                className="tool-input w-full py-2 px-3" />
             )}
 
             {/* Rate Limit */}
             <div>
-              <label className="block text-xs text-white/40 mb-2">限速 (MB/s)</label>
+              <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">限速 (MB/s)</label>
               <input type="number" value={rateLimit} onChange={(e) => setRateLimit(e.target.value)}
                 placeholder="留空不限速" min="0.1" step="0.1"
-                className="w-40 bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                  text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
+                className="tool-input w-40 py-2 px-3" />
             </div>
 
             {/* Embed options */}
-            <div className="space-y-2.5">
-              <label className="flex items-center gap-2 text-xs text-white/50">
-                <input type="checkbox" checked={embedThumbnail} onChange={(e) => setEmbedThumbnail(e.target.checked)} className="rounded" />
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-xs font-medium text-[#4A4A4A]">
+                <input type="checkbox" checked={embedThumbnail} onChange={(e) => setEmbedThumbnail(e.target.checked)} className="rounded border-[#1D1C1C]" />
                 嵌入封面图
               </label>
-              <label className="flex items-center gap-2 text-xs text-white/50">
-                <input type="checkbox" checked={embedMetadata} onChange={(e) => setEmbedMetadata(e.target.checked)} className="rounded" />
+              <label className="flex items-center gap-2 text-xs font-medium text-[#4A4A4A]">
+                <input type="checkbox" checked={embedMetadata} onChange={(e) => setEmbedMetadata(e.target.checked)} className="rounded border-[#1D1C1C]" />
                 嵌入元数据 (标题/作者/日期)
               </label>
             </div>
 
             {/* Chapter split */}
             {hasChapters && (
-              <label className="flex items-center gap-2 text-xs text-white/50">
-                <input type="checkbox" checked={splitChapters} onChange={(e) => setSplitChapters(e.target.checked)} className="rounded" />
+              <label className="flex items-center gap-2 text-xs font-medium text-[#4A4A4A]">
+                <input type="checkbox" checked={splitChapters} onChange={(e) => setSplitChapters(e.target.checked)} className="rounded border-[#1D1C1C]" />
                 按章节拆分为多个文件
               </label>
             )}
 
-            {/* SponsorBlock - YouTube only */}
+            {/* SponsorBlock */}
             {isYouTube && (
-              <label className="flex items-center gap-2 text-xs text-white/50">
-                <input type="checkbox" checked={sponsorBlock} onChange={(e) => setSponsorBlock(e.target.checked)} className="rounded" />
+              <label className="flex items-center gap-2 text-xs font-medium text-[#4A4A4A]">
+                <input type="checkbox" checked={sponsorBlock} onChange={(e) => setSponsorBlock(e.target.checked)} className="rounded border-[#1D1C1C]" />
                 移除广告/赞助片段 (SponsorBlock)
               </label>
             )}
 
-            {/* === Useful Advanced Features === */}
-            <div className="pt-3 mt-3 border-t border-white/[0.06] space-y-4">
-              <p className="text-xs text-white/30 tracking-widest uppercase">进阶功能</p>
+            {/* Advanced Features */}
+            <div className="pt-3 mt-3 border-t border-[#E8E8E8] space-y-3">
+              <p className="text-xs font-black text-[#4A4A4A] uppercase tracking-widest">进阶功能</p>
 
               {/* Video section clip */}
               <div>
-                <label className="block text-xs text-white/40 mb-2">片段截取 (起止时间)</label>
+                <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">片段截取</label>
                 <input type="text" value={downloadSections} onChange={(e) => setDownloadSections(e.target.value)}
                   placeholder="如 00:01:00-00:02:30"
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all" />
-                <p className="text-[11px] text-white/20 mt-1.5">留空下载完整视频，填入时间范围仅下载该片段</p>
+                  className="tool-input w-full py-2 px-3" />
+                <p className="text-[11px] text-[#4A4A4A]/60 mt-1">留空下载完整视频</p>
               </div>
 
               {/* Concurrent fragments */}
               <div>
-                <label className="block text-xs text-white/40 mb-2">多线程加速</label>
+                <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">多线程加速</label>
                 <div className="flex items-center gap-3">
                   <input type="range" min="1" max="16" value={concurrentFragments}
                     onChange={(e) => setConcurrentFragments(parseInt(e.target.value))}
-                    className="flex-1 h-1.5 bg-white/[0.08] rounded-full appearance-none cursor-pointer
+                    className="flex-1 h-1.5 bg-[#E8E8E8] rounded-full appearance-none cursor-pointer
                       [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
-                      [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg" />
-                  <span className="text-xs text-white/50 w-8 text-right">{concurrentFragments}x</span>
+                      [&::-webkit-slider-thumb]:bg-[#1D1C1C] [&::-webkit-slider-thumb]:rounded-full" />
+                  <span className="text-xs font-bold text-[#1D1C1C] w-8 text-right">{concurrentFragments}x</span>
                 </div>
-                {concurrentFragments > 1 && (
-                  <p className="text-[11px] text-violet-300/50 mt-1.5">PRO · {concurrentFragments} 线程并发</p>
-                )}
               </div>
 
-              {/* Remux format conversion */}
+              {/* Remux format */}
               <div>
-                <label className="block text-xs text-white/40 mb-2">格式转换</label>
+                <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">格式转换</label>
                 <select value={remuxFormat} onChange={(e) => setRemuxFormat(e.target.value)}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
+                  className="tool-select w-full py-2 px-3">
                   <option value="">不转换</option>
                   <option value="mp4">转为 MP4</option>
                   <option value="mkv">转为 MKV</option>
@@ -321,10 +275,9 @@ function DownloadOptions({ videoInfo, onDownload }) {
 
               {/* Quality preference */}
               <div>
-                <label className="block text-xs text-white/40 mb-2">画质偏好</label>
+                <label className="block text-xs font-bold text-[#4A4A4A] mb-1.5">画质偏好</label>
                 <select value={formatSort} onChange={(e) => setFormatSort(e.target.value)}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm
-                    text-white/70 focus:outline-none focus:border-white/[0.2] transition-all">
+                  className="tool-select w-full py-2 px-3">
                   <option value="">默认 (最佳画质)</option>
                   <option value="res:1080">优先 1080P</option>
                   <option value="res:720">优先 720P (省流量)</option>
@@ -337,20 +290,19 @@ function DownloadOptions({ videoInfo, onDownload }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-2">
         <button onClick={() => handleDownload(false)}
-          className="flex-1 bg-white text-gray-900 font-semibold py-3.5 rounded-2xl
-            flex items-center justify-center gap-2 transition-all duration-300
-            hover:shadow-lg hover:shadow-white/10 active:scale-[0.97]">
+          className="flex-1 bg-[#1D1C1C] text-white font-bold py-3 rounded-full
+            flex items-center justify-center gap-2 transition-all duration-200
+            hover:opacity-90 active:scale-[0.97]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
           开始下载
         </button>
         <button onClick={() => handleDownload(true)}
-          className="px-4 py-3.5 rounded-2xl bg-white/[0.06] border border-white/[0.1]
-            text-white/60 text-sm transition-all duration-300 backdrop-blur-xl
-            hover:bg-white/[0.1] hover:border-white/[0.18] active:scale-[0.97]"
+          className="px-4 py-3 rounded-full border-2 border-[#1D1C1C] text-[#1D1C1C]
+            transition-all duration-200 hover:bg-[#1D1C1C] hover:text-white active:scale-[0.97]"
           title="仅下载封面图"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -359,22 +311,21 @@ function DownloadOptions({ videoInfo, onDownload }) {
         </button>
       </div>
 
-      {/* Description/Copywriting extract */}
+      {/* Description/Copy */}
       {videoInfo.description && (
-        <div className="pt-4 border-t border-white/[0.06]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-white/25 tracking-wider">视频描述</span>
+        <div className="pt-3 border-t border-[#E8E8E8]">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-bold text-[#4A4A4A]">视频描述</span>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(videoInfo.description);
-                alert('文案已复制到剪贴板');
               }}
-              className="text-xs text-violet-400/60 hover:text-violet-300 transition-colors"
+              className="text-xs font-bold text-[#CC0066] hover:underline transition-colors"
             >
               复制文案
             </button>
           </div>
-          <p className="text-xs text-white/30 leading-relaxed line-clamp-3">
+          <p className="text-xs text-[#4A4A4A] leading-relaxed line-clamp-3">
             {videoInfo.description.slice(0, 200)}{videoInfo.description.length > 200 ? '...' : ''}
           </p>
         </div>

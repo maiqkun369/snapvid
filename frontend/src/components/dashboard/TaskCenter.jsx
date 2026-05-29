@@ -63,11 +63,11 @@ function TaskCenter() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-bold text-[#1D1C1C] truncate">{task.title || '获取中...'}</p>
-                    <p className="text-sm font-medium text-[#4A4A4A] mt-0.5 truncate">{task.url?.slice(0, 50)}...</p>
+                    <p className="text-sm font-medium text-[#4A4A4A] mt-0.5 truncate">{task.url?.slice(0, 50)}{task.url?.length > 50 ? '...' : ''}</p>
                   </div>
                   <div className="flex items-center gap-3 ml-4">
                     <span className="text-xs px-3 py-1 rounded-full font-bold border border-[#1D1C1C] bg-[#7af7f7] text-[#1D1C1C]">
-                      下载中
+                      {task.title === '获取中...' ? '解析中' : '下载中'}
                     </span>
                     <button onClick={() => handleCancel(task.id)}
                       className="text-sm font-medium text-[#4A4A4A] hover:text-red-600 px-3 py-1.5 rounded-full hover:bg-red-50 transition-all">
