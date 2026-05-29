@@ -4,10 +4,9 @@ import asyncio
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from api.routes import router, scheduler_service, downloader_service
 
@@ -82,25 +81,7 @@ async def startup_event():
 # Include API routes
 app.include_router(router, prefix="/api")
 
-
-# Middleware to add COOP/COEP headers for /tools/ path (required for SharedArrayBuffer/ffmpeg.wasm)
-class COOPCOEPMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        if request.url.path.startswith("/tools"):
-            response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-            response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
-        return response
-
-app.add_middleware(COOPCOEPMiddleware)
-
-
-# Serve ffmpeg-web toolbox at /tools/ (same origin, no redirect)
-TOOLS_DIR = Path("/app/static/tools")
-if TOOLS_DIR.exists():
-    app.mount("/tools", StaticFiles(directory=str(TOOLS_DIR), html=True), name="toolbox")
-
-# Serve frontend static files (catch-all, must be last)
+# Serve frontend static files (catch-all)
 STATIC_DIR = Path("/app/static")
 if STATIC_DIR.exists():
     app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
