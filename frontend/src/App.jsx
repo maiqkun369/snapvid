@@ -184,12 +184,9 @@ function App() {
 
   return (
     <>
-      {/* Agreement Modal */}
       <Agreement />
-      {/* Auth Modal */}
       <AuthModal show={showAuth} onClose={() => setShowAuth(false)} onLogin={handleLogin} />
 
-      {/* Route: Dashboard */}
       {route === 'dashboard' && user ? (
         <Dashboard
           user={user}
@@ -197,86 +194,91 @@ function App() {
           onNewDownload={() => { window.location.hash = '#/'; }}
         />
       ) : (
-    <div className="min-h-screen relative overflow-hidden bg-[#FAFAF9]">
+    <div className="min-h-screen">
 
-      {/* Decorative blobs */}
-      <div className="accent-blob accent-blob--pink" />
-      <div className="accent-blob accent-blob--yellow" />
-
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="#/" className="text-xl font-extrabold text-[#1D1C1C] tracking-tight">
-            SnapVid
-          </a>
-          <nav className="flex items-center gap-5">
-            {user && (
-              <a href="#/dashboard" className="text-sm font-semibold text-[#1D1C1C] hover:text-[#CC0066] transition-colors">
-                控制台
-              </a>
-            )}
-            {user ? (
-              <div className="flex items-center gap-3">
-                {user.plan === 'pro' && (
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FFF48D] border-2 border-[#1D1C1C] text-[#1D1C1C]">
-                    PRO
-                  </span>
-                )}
-                <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-[#1D1C1C] transition-colors font-medium">
-                  退出
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuth(true)}
-                className="btn-primary text-sm py-2.5 px-6"
-              >
-                登录
-              </button>
-            )}
-          </nav>
+      {/* === HERO SECTION (full viewport, gradient bg) === */}
+      <section className="gradient-hero">
+        {/* Top Logo */}
+        <div className="absolute top-8 left-0 right-0 flex justify-center scale-in">
+          <span className="text-2xl font-black tracking-tight text-[#1D1C1C]">SnapVid</span>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="relative z-10 pt-28 pb-24">
-        <div className="max-w-3xl mx-auto px-6">
+        {/* Language / Login switcher (bottom right) */}
+        <div className="absolute bottom-8 right-8 flex items-center gap-3">
+          {user ? (
+            <div className="flex items-center gap-2">
+              {user.plan === 'pro' && (
+                <span className="btn-highlight text-xs py-2 px-4">PRO</span>
+              )}
+              <a href="#/dashboard" className="btn-outline text-sm py-2.5 px-5">控制台</a>
+            </div>
+          ) : (
+            <button onClick={() => setShowAuth(true)} className="btn-outline text-sm py-2.5 px-5">
+              登录
+            </button>
+          )}
+        </div>
 
-          {/* Hero */}
-          <div className="text-center mb-16 fade-up hero-section" style={{ minHeight: 'auto', paddingTop: '6vh' }}>
-            <h1 className="hero-title mb-6">
-              <span className="text-[#1D1C1C]">Your Creative</span>
-              <br />
-              <span className="text-[#CC0066]">Backup Tool.</span>
-            </h1>
-            <p className="text-lg text-[#6B6B6B] max-w-md mx-auto leading-relaxed font-medium">
-              安全备份你的原创作品，下载公开授权素材
+        {/* Main Title (super bold, animated) */}
+        <div className="text-center px-6 fade-up">
+          <h1 className="display-title">
+            <span className="block">YOUR</span>
+            <span className="block">CREATIVE</span>
+            <span className="block text-[#CC0066]">BACKUP.</span>
+          </h1>
+        </div>
+
+        {/* Floating sticker elements */}
+        <div className="absolute top-[20%] left-[8%] text-5xl float-anim delay-2">🎬</div>
+        <div className="absolute top-[15%] right-[10%] text-4xl float-anim delay-3" style={{ animationDelay: '1s' }}>⬇️</div>
+        <div className="absolute bottom-[25%] left-[12%] text-5xl float-anim" style={{ animationDelay: '2s' }}>🎵</div>
+        <div className="absolute bottom-[20%] right-[8%] text-4xl float-anim delay-1" style={{ animationDelay: '0.5s' }}>🎞️</div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 fade-up delay-5">
+          <div className="w-8 h-12 rounded-full border-2 border-[#1D1C1C] flex items-start justify-center p-2">
+            <div className="w-1.5 h-3 bg-[#1D1C1C] rounded-full animate-bounce" />
+          </div>
+        </div>
+      </section>
+
+      {/* === MAIN CONTENT (below hero) === */}
+      <section className="section-gradient py-20 px-6">
+        <div className="max-w-3xl mx-auto">
+
+          {/* Section title */}
+          <div className="text-center mb-12 fade-up">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#1D1C1C] tracking-tight">
+              粘贴链接，一键下载
+            </h2>
+            <p className="text-lg text-[#4A4A4A] mt-3 font-medium">
+              支持 B站、抖音、快手、西瓜视频等 1000+ 平台
             </p>
           </div>
 
           {/* URL Input */}
-          <div className="fade-up" style={{ animationDelay: '0.15s' }}>
+          <div className="fade-up delay-1">
             <UrlInput onParse={handleParse} onBatchParse={handleBatchParse} loading={loading} />
           </div>
 
           {/* Error */}
           {error && (
-            <div className="mt-6 px-6 py-4 rounded-2xl bg-red-50 border-2 border-red-200 text-red-700 text-sm font-medium fade-up">
+            <div className="mt-6 px-6 py-4 rounded-2xl bg-red-50 border-2 border-red-300 text-red-700 text-sm font-bold fade-up">
               {error}
             </div>
           )}
 
-          {/* Video Info + Download */}
+          {/* Video Info + Download (combined card) */}
           {videoInfo && (
             <div className="mt-8 fade-up">
               <div className="card">
                 <div className="flex gap-5">
                   {videoInfo.thumbnail && (
-                    <img src={videoInfo.thumbnail} alt="" className="w-40 h-24 object-cover rounded-xl shrink-0" />
+                    <img src={videoInfo.thumbnail} alt="" className="w-44 h-28 object-cover rounded-xl shrink-0 border-2 border-[#1D1C1C]" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-[#1D1C1C] truncate">{videoInfo.title}</h3>
-                    <p className="text-sm text-[#6B6B6B] mt-1">
+                    <h3 className="text-lg font-black text-[#1D1C1C] truncate">{videoInfo.title}</h3>
+                    <p className="text-sm text-[#4A4A4A] mt-1 font-medium">
                       {videoInfo.uploader && <span>{videoInfo.uploader}</span>}
                       {videoInfo.duration_string && <span> · {videoInfo.duration_string}</span>}
                       {videoInfo.platform && <span> · {videoInfo.platform}</span>}
@@ -305,27 +307,27 @@ function App() {
           )}
 
           {/* Supported Platforms */}
-          <div className="mt-20 text-center fade-up" style={{ animationDelay: '0.3s' }}>
-            <p className="text-sm font-bold text-[#6B6B6B] uppercase tracking-wider mb-4">支持 1000+ 平台</p>
+          <div className="mt-20 text-center fade-up delay-3">
+            <p className="text-sm font-black text-[#4A4A4A] uppercase tracking-widest mb-5">支持平台</p>
             <div className="flex flex-wrap justify-center gap-3">
               {['Bilibili', '抖音', '快手', '西瓜视频', '小红书', '微博', '优酷', '爱奇艺'].map(p => (
-                <span key={p} className="px-4 py-2 rounded-full border-2 border-[#E8E8E8] text-sm font-semibold text-[#1D1C1C] hover:border-[#CC0066] hover:text-[#CC0066] transition-all cursor-default">
+                <span key={p} className="px-5 py-2.5 rounded-full border-2 border-[#1D1C1C] text-sm font-bold text-[#1D1C1C]
+                  hover:bg-[#1D1C1C] hover:text-white transition-all duration-200 cursor-default">
                   {p}
                 </span>
               ))}
             </div>
           </div>
-
         </div>
-      </main>
+      </section>
 
-      {/* Footer */}
-      <footer className="footer-highlight py-8 mt-16 border-t-2 border-[#1D1C1C]">
+      {/* === FOOTER (yellow bg like Wero) === */}
+      <footer className="bg-[#FFF48D] py-10 border-t-3 border-[#1D1C1C]" style={{ borderTopWidth: '3px' }}>
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-sm font-semibold text-[#1D1C1C]">
-            仅支持下载用户自有版权 / CC0 公开授权 / 公共领域内容 · 不存储不缓存不分发
+          <p className="text-sm font-bold text-[#1D1C1C]">
+            仅支持下载用户自有版权 / CC0 / 公共领域内容 · 不存储不缓存不分发
           </p>
-          <p className="text-xs text-[#1D1C1C]/60 mt-2">
+          <p className="text-xs text-[#1D1C1C]/60 mt-2 font-medium">
             侵权投诉: abuse@snapvid.app · Powered by yt-dlp
           </p>
         </div>

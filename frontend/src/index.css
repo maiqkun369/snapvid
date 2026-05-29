@@ -1,23 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-bg: #FAFAF9;
-  --color-surface: #FFFFFF;
   --color-text: #1D1C1C;
-  --color-text-muted: #6B6B6B;
+  --color-text-muted: #4A4A4A;
   --color-accent: #CC0066;
-  --color-accent-light: #FF1A80;
   --color-highlight: #FFF48D;
-  --color-border: #E8E8E8;
-  --color-border-hover: #D0D0D0;
-  --radius-sm: 12px;
-  --radius-md: 20px;
-  --radius-lg: 40px;
+  --color-surface: #FFFFFF;
   --radius-full: 9999px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
 }
 
 @layer base {
@@ -26,146 +21,132 @@
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont,
       'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.5;
     color: var(--color-text);
-    background: var(--color-bg);
+    background: #FAFAF9;
   }
 }
 
 @layer components {
-  /* === Primary Button (dark bg, white text, pill shape) === */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
-      text-white font-bold text-base
+      text-white font-extrabold text-base
       transition-all duration-200 ease-out
-      focus:outline-none focus:ring-2 focus:ring-offset-2
+      focus:outline-none
       disabled:opacity-40 disabled:cursor-not-allowed
-      active:scale-[0.97];
+      active:scale-[0.96];
     background: var(--color-text);
-    padding: 14px 32px;
+    padding: 16px 36px;
     border-radius: var(--radius-full);
   }
 
   .btn-primary:hover {
-    background: #333;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
   }
 
-  /* === Accent Button (magenta) === */
   .btn-accent {
     @apply inline-flex items-center justify-center gap-2
-      text-white font-bold text-base
+      text-white font-extrabold text-base
       transition-all duration-200 ease-out
-      active:scale-[0.97];
+      active:scale-[0.96];
     background: var(--color-accent);
-    padding: 14px 32px;
+    padding: 16px 36px;
     border-radius: var(--radius-full);
   }
 
   .btn-accent:hover {
-    background: var(--color-accent-light);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(204, 0, 102, 0.3);
+    background: #E6007A;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(204, 0, 102, 0.3);
   }
 
-  /* === Secondary Button (outline, pill) === */
-  .btn-secondary {
+  .btn-outline {
     @apply inline-flex items-center justify-center gap-2
-      font-semibold text-base
+      font-extrabold text-base
       transition-all duration-200
-      active:scale-[0.97];
+      active:scale-[0.96];
     color: var(--color-text);
     background: transparent;
-    border: 2px solid var(--color-text);
-    padding: 12px 28px;
+    border: 2.5px solid var(--color-text);
+    padding: 14px 32px;
     border-radius: var(--radius-full);
   }
 
-  .btn-secondary:hover {
+  .btn-outline:hover {
     background: var(--color-text);
     color: white;
   }
 
-  /* === Highlight Button (yellow bg) === */
   .btn-highlight {
     @apply inline-flex items-center justify-center gap-2
-      font-bold text-base
+      font-extrabold text-base
       transition-all duration-200
-      active:scale-[0.97];
+      active:scale-[0.96];
     color: var(--color-text);
     background: var(--color-highlight);
-    border: 2px solid var(--color-text);
-    padding: 12px 28px;
+    border: 2.5px solid var(--color-text);
+    padding: 14px 32px;
     border-radius: var(--radius-full);
   }
 
-  .btn-highlight:hover {
-    background: #ffe94d;
-    transform: translateY(-1px);
-  }
-
-  /* === Input Field === */
   .input-field {
-    @apply w-full text-base placeholder-gray-400
+    @apply w-full text-base font-semibold placeholder-gray-400
       focus:outline-none transition-all duration-200;
     color: var(--color-text);
     background: var(--color-surface);
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 16px 20px;
+    border: 2.5px solid var(--color-text);
+    border-radius: var(--radius-full);
+    padding: 18px 24px;
   }
 
   .input-field:focus {
+    box-shadow: 0 0 0 4px rgba(204, 0, 102, 0.15);
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(204, 0, 102, 0.1);
   }
 
-  /* === Card === */
   .card {
     @apply transition-all duration-300;
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: 2px solid var(--color-text);
+    border-radius: var(--radius-lg);
     padding: 28px;
   }
 
   .card:hover {
-    border-color: var(--color-border-hover);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    transform: translateY(-2px);
-  }
-
-  /* === Section Title === */
-  .section-title {
-    @apply text-sm font-bold uppercase tracking-wider mb-6;
-    color: var(--color-text-muted);
+    transform: translateY(-3px);
+    box-shadow: 6px 6px 0 0 var(--color-text);
   }
 }
 
-/* === Hero Section (full viewport) === */
-.hero-section {
+/* === Hero Gradient Background (pink → yellow) === */
+.gradient-hero {
+  background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 25%, #FFF48D 80%, #FFF9C4 100%);
+  min-height: 100svh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100svh;
   position: relative;
+  overflow: hidden;
 }
 
-.hero-title {
-  font-size: clamp(3rem, 8vw, 6rem);
-  font-weight: 800;
-  letter-spacing: -2px;
-  line-height: 0.9;
+/* === Super Bold Display Title === */
+.display-title {
+  font-weight: 900;
+  font-size: clamp(3.5rem, 12vw, 9rem);
+  line-height: 0.85;
+  letter-spacing: -4px;
+  text-transform: uppercase;
   text-align: center;
   color: var(--color-text);
 }
 
-/* === Smooth Entrance === */
+/* === Entrance Animations === */
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -173,32 +154,88 @@
   }
 }
 
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .fade-up {
-  animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   opacity: 0;
 }
 
-/* === Accent Background Blob === */
-.accent-blob {
-  position: absolute;
-  width: 40vw;
-  height: 40vw;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
-  pointer-events: none;
+.scale-in {
+  animation: scaleIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
 }
 
-.accent-blob--pink {
-  background: var(--color-accent);
-  top: -10%;
-  right: -5%;
+.float-anim {
+  animation: float 3s ease-in-out infinite;
 }
 
-.accent-blob--yellow {
-  background: var(--color-highlight);
-  bottom: -10%;
-  left: -5%;
+.slide-left {
+  animation: slideInLeft 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+.slide-right {
+  animation: slideInRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+/* === Stagger delays === */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+
+/* === Pill language switcher === */
+.pill-switch {
+  display: inline-flex;
+  background: var(--color-surface);
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.pill-switch button {
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.pill-switch button.active {
+  background: var(--color-text);
+  color: white;
+  border-radius: var(--radius-full);
+}
+
+/* === Content sections (below hero) === */
+.section-gradient {
+  background: linear-gradient(180deg, #FFF9C4 0%, #FFFFFF 100%);
 }
 
 /* === Scrollbar === */
@@ -216,7 +253,20 @@
   background: rgba(0, 0, 0, 0.3);
 }
 
-/* === Footer highlight bg === */
-.footer-highlight {
+/* === Highlight text decoration === */
+.text-highlight {
+  position: relative;
+  display: inline-block;
+}
+
+.text-highlight::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: 0;
+  height: 40%;
   background: var(--color-highlight);
+  z-index: -1;
+  border-radius: 4px;
 }
