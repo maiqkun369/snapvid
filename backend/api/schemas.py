@@ -199,3 +199,46 @@ class LoginResponse(BaseModel):
     token: str = Field(default="")
     user: UserInfo = Field(default_factory=UserInfo)
 
+
+# === AI Chat & Analysis ===
+
+
+class AIChatRequest(BaseModel):
+    """Request for AI chat."""
+
+    prompt: str = Field(..., description="User prompt text")
+    system_prompt: Optional[str] = Field(default=None, description="Optional system prompt")
+
+
+class AIVideoAnalysisRequest(BaseModel):
+    """Request for AI video analysis (summary, copywriting, tags)."""
+
+    video_info: dict = Field(..., description="Video metadata dict")
+    context: Optional[str] = Field(default="", description="Additional context")
+    style: Optional[str] = Field(default="social", description="Copywriting style: social, professional, quirky, seo")
+    count: Optional[int] = Field(default=5, description="Number of tags to generate")
+
+
+class AIFileAnalysisRequest(BaseModel):
+    """Request for AI file analysis."""
+
+    file_path: str = Field(..., description="Path to the file to analyse")
+    instruction: Optional[str] = Field(default="", description="Analysis instruction")
+
+
+class AITokensUsed(BaseModel):
+    """Token usage statistics."""
+
+    prompt_tokens: int = Field(default=0)
+    completion_tokens: int = Field(default=0)
+
+
+class AIResponse(BaseModel):
+    """Response for AI operations."""
+
+    success: bool = Field(default=False, description="Whether the operation succeeded")
+    data: str | list = Field(default="", description="Result data (string or list of tags)")
+    tokens_used: AITokensUsed = Field(default_factory=AITokensUsed, description="Token usage info")
+    cost_estimate: float = Field(default=0.0, description="Estimated cost in USD")
+    error: Optional[str] = Field(default=None, description="Error message if failed")
+

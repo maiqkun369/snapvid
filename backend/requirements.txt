@@ -8,3 +8,4 @@ PyJWT>=2.8.0
 curl_cffi>=0.7.0
 mutagen>=1.47.0
 requests>=2.31.0
+openai>=1.50.0

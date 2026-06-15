@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from api.routes import router, scheduler_service, downloader_service
+from services.ai_text_service import AITextService
 
 # Create downloads directory
 DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", "/app/downloads"))
@@ -75,6 +76,8 @@ async def _scheduler_loop():
 @app.on_event("startup")
 async def startup_event():
     """Start background tasks on app startup."""
+    # Trigger AITextService initialisation early to log availability
+    _ = AITextService()
     asyncio.create_task(_scheduler_loop())
 
 

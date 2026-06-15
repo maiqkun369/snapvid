@@ -9,6 +9,10 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Re
 from fastapi.responses import FileResponse, StreamingResponse
 
 from api.schemas import (
+    AIChatRequest,
+    AIFileAnalysisRequest,
+    AIResponse,
+    AIVideoAnalysisRequest,
     BatchDownloadRequest,
     BatchInfoItem,
     BatchInfoRequest,
@@ -29,6 +33,7 @@ from services.downloader import DownloaderService
 from services.auth import AuthService
 from services.cloud_sync import CloudSyncService
 from services.ai_tools import AIToolsService
+from services.ai_text_service import AITextService
 from services.media_tools import MediaToolsService
 from services.referral import ReferralService
 from services.scheduler import SchedulerService
@@ -44,6 +49,7 @@ downloader_service = DownloaderService()
 auth_service = AuthService()
 cloud_sync_service = CloudSyncService()
 ai_tools_service = AIToolsService()
+ai_text_service = AITextService()
 media_tools_service = MediaToolsService()
 referral_service = ReferralService()
 scheduler_service = SchedulerService()
@@ -985,4 +991,72 @@ async def tools_audio_separate(task_id: str = "", mode: str = "vocals") -> dict:
         return _register_output(result, task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# === AI Text Intelligence (DeepSeek) ===
+
+
+@router.post("/ai/chat", response_model=AIResponse)
+async def ai_chat(request: AIChatRequest, token: str = "") -> AIResponse:
+    """AI free-form chat."""
+    perm = auth_service.check_download_permission(token or None)
+    if not perm.get("allowed"):
+        raise HTTPException(status_code=403, detail="请先登录后使用 AI 功能")
+    result = ai_text_service.chat(request.prompt, request.system_prompt)
+    return _build_ai_response(result)
+
+
+@router.post("/ai/summary", response_model=AIResponse)
+async def ai_summary(request: AIVideoAnalysisRequest, token: str = "") -> AIResponse:
+    """Generate video content summary."""
+    perm = auth_service.check_download_permission(token or None)
+    if not perm.get("allowed"):
+        raise HTTPException(status_code=403, detail="请先登录后使用 AI 功能")
+    result = ai_text_service.generate_summary(request.video_info, request.context or "")
+    return _build_ai_response(result)
+
+
+@router.post("/ai/copywriting", response_model=AIResponse)
+async def ai_copywriting(request: AIVideoAnalysisRequest, token: str = "") -> AIResponse:
+    """Generate social media copywriting."""
+    perm = auth_service.check_download_permission(token or None)
+    if not perm.get("allowed"):
+        raise HTTPException(status_code=403, detail="请先登录后使用 AI 功能")
+    result = ai_text_service.generate_copywriting(request.video_info, request.style or "social")
+    return _build_ai_response(result)
+
+
+@router.post("/ai/tags", response_model=AIResponse)
+async def ai_tags(request: AIVideoAnalysisRequest, token: str = "") -> AIResponse:
+    """Generate smart tags."""
+    perm = auth_service.check_download_permission(token or None)
+    if not perm.get("allowed"):
+        raise HTTPException(status_code=403, detail="请先登录后使用 AI 功能")
+    result = ai_text_service.generate_tags(request.video_info, request.count or 5)
+    return _build_ai_response(result)
+
+
+@router.post("/ai/analyze-file", response_model=AIResponse)
+async def ai_analyze_file(request: AIFileAnalysisRequest, token: str = "") -> AIResponse:
+    """Analyze a text file (.srt/.vtt/.txt) with AI."""
+    perm = auth_service.check_download_permission(token or None)
+    if not perm.get("allowed"):
+        raise HTTPException(status_code=403, detail="请先登录后使用 AI 功能")
+    result = ai_text_service.analyze_file(request.file_path, request.instruction or "")
+    return _build_ai_response(result)
+
+
+def _build_ai_response(result: dict) -> AIResponse:
+    """Convert service dict to AIResponse Pydantic model."""
+    tokens_raw = result.get("tokens_used", {}) or {}
+    return AIResponse(
+        success=result.get("success", False),
+        data=result.get("data", ""),
+        tokens_used={
+            "prompt_tokens": tokens_raw.get("prompt_tokens", 0),
+            "completion_tokens": tokens_raw.get("completion_tokens", 0),
+        },
+        cost_estimate=result.get("cost_estimate", 0.0),
+        error=result.get("error"),
+    )
 
