@@ -241,7 +241,9 @@ class DownloaderService:
             "extract_flat": False,
             "skip_download": True,
             "http_headers": {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
                 "Referer": url,
             },
             "extractor_args": {
@@ -268,13 +270,23 @@ class DownloaderService:
         try:
             info = await loop.run_in_executor(None, self._extract_info, url, ydl_opts)
         except ValueError as e:
+            # B站 412 风控：用 B站官方 API bypass
+            err_msg = str(e).lower()
+            if "bilibili.com" in url and ("412" in err_msg or "precondition" in err_msg or "unable to download" in err_msg):
+                logger.warning(f"B站 yt-dlp 412 blocked, trying API bypass for {url}")
+                try:
+                    bypass_info = await self._bilibili_api_bypass(url)
+                    if bypass_info:
+                        return bypass_info
+                except Exception as be:
+                    logger.error(f"B站 API bypass also failed: {be}")
             # If Douyin fails, try fallback parser
-            if "douyin.com" in url:
+            elif "douyin.com" in url:
                 fallback_info = await self._try_douyin_fallback(url)
                 if fallback_info:
                     return fallback_info
             # If YouTube fails, try fallback
-            if "youtube.com" in url or "youtu.be" in url:
+            elif "youtube.com" in url or "youtu.be" in url:
                 fallback_info = await self._try_youtube_fallback(url)
                 if fallback_info:
                     return fallback_info
@@ -282,7 +294,7 @@ class DownloaderService:
                     "YouTube 暂不可用。当前网络环境无法连接 YouTube 服务器，"
                     "建议使用 Bilibili、抖音等国内平台的视频链接。"
                 )
-            raise  # Re-raise if no fallback or fallback failed
+            raise
 
         if info is None:
             # Try platform fallbacks before giving up
@@ -448,7 +460,9 @@ class DownloaderService:
             "socket_timeout": 30,
             "progress_hooks": [lambda d: self._sync_progress_hook(task_id, d)],
             "http_headers": {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
                 "Referer": request.url,
             },
         }
@@ -943,6 +957,83 @@ class DownloaderService:
     def get_comments(self, task_id: str) -> list:
         """Get exported comments for a task."""
         return self._comments.get(task_id, [])
+
+    async def _bilibili_api_bypass(self, url: str) -> Optional[VideoInfoResponse]:
+        """Bypass B站 anti-bot 412 by using direct API calls."""
+        import urllib.request, json
+
+        bvid = None
+        m = re.search(r'/video/(?:BV|av|AV)([A-Za-z0-9]+)', url)
+        if m:
+            bvid = f"BV{m.group(1)}" if not m.group(0).startswith('/video/av') else m.group(1)
+        else:
+            m = re.search(r'(BV[A-Za-z0-9]+)', url)
+            if m:
+                bvid = m.group(1)
+
+        if not bvid:
+            logger.warning("B站 bypass: cannot extract BVID from URL")
+            return None
+
+        api_url = f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0",
+            "Referer": "https://www.bilibili.com/",
+            "Accept": "application/json, text/plain, */*",
+        }
+        req = urllib.request.Request(api_url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                raw = json.loads(resp.read().decode("utf-8"))
+        except Exception as e:
+            logger.error(f"B站 API bypass failed: {e}")
+            return None
+
+        if raw.get("code") != 0:
+            logger.warning(f"B站 API returned error code {raw.get('code')}: {raw.get('message','')}")
+            return None
+
+        data = raw["data"]
+        title = data.get("title", "未知标题")
+        duration = data.get("duration", 0)
+        mins, secs = int(duration) // 60, int(duration) % 60
+        owner = data.get("owner", {})
+        uploader = owner.get("name", "未知")
+        pic = data.get("pic", "")
+        desc = data.get("desc", "") or ""
+
+        # Parse formats from API response
+        pages = data.get("pages", [])
+        formats = []
+        for p in pages:
+            dim = p.get("dimension", {})
+            width = dim.get("width", 0) or 0
+            height = dim.get("height", 0) or 0
+            res = f"{width}x{height}" if width else "unknown"
+            formats.append(VideoFormat(
+                format_id=str(p.get("cid", "")),
+                format_note=p.get("part", ""),
+                ext="mp4",
+                resolution=res,
+            ))
+
+        if not formats:
+            formats.append(VideoFormat(format_id="best", format_note="", ext="mp4", resolution="原始画质"))
+
+        return VideoInfoResponse(
+            title=title,
+            duration=duration,
+            duration_string=f"{mins:02d}:{secs:02d}",
+            thumbnail=pic,
+            uploader=uploader,
+            platform="BiliBili",
+            description=desc,
+            formats=formats,
+            subtitles=[],
+            chapters=None,
+            comment_count=None,
+            requires_auth=False,
+        )
 
     async def _try_douyin_fallback(self, url: str) -> Optional[VideoInfoResponse]:
         """Try extracting Douyin video info using custom fallback parser."""
